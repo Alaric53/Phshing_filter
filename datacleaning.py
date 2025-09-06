@@ -48,10 +48,11 @@ def datacleaning(data):
     # Convert to DataFrame
     idf = pd.DataFrame(X.toarray(), columns=vectorizer.get_feature_names_out())
 
+    #CLEANED TEXT IS FOR RULE BASED
+    # idf is for ML
     print(cleaned_text)
     print(idf)
+    print(emails,domains,urls)
 
 datacleaning(data)
 
-#CLEANED TEXT IS FOR RULE BASED
-# idf
