@@ -18,10 +18,17 @@ SAFE_DOMAINS = [
 ]
 
 SUSPICIOUS_KEYWORDS = [
-    "urgent", "immediately","important", "verify", "account", "password", "login", "sign in", "credential",
-    "security alert", "unusual activity", "suspended", "locked", "payment", "transaction", "banking", "refund",
-    "credit card", "debit", "prize", "lottery", "winner", "reset", "free", "offer", "limited time", "attention"
-]   # probably have many more
+    "access", "accounts", "auth", "security", "portal", "user", "company", "admin",
+    "credential", "identity", "login", "password", "privilege", "token", "validation",
+    "assurance", "availability", "confidentiality", "integrity", "privacy", "safety",
+    "trust", "verification", "check", "key", "lock", "biometrics", "authorize",
+    "authentication", "session", "profile", "service", "support", "notify", "email",
+    "account", "update", "secure", "notification", "transaction", "validate",
+    "confirmation", "manager", "assistant", "dashboard", "information", "communication",
+    "finance", "maintenance", "customer", "invoice", "billing", "subscription", "order",
+    "shipment", "purchase", "billinginfo", "receipt", "accountinfo", "profile",
+]
+
 
 def safe_domain_check(provided_email):
     domain = provided_email.split("@")[-1].lower()
@@ -94,6 +101,7 @@ def ruleset(email):     #TBD if we using dict
     score += url_score
 
     return score, suspicious_urls
+
 
 
 
