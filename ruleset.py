@@ -40,7 +40,7 @@ def suspicious_keyword_check(subject,body):       # check the subject and body o
 
 def keyword_position_scoring(subject,body):
     score = 0
-    body_content = body.lower().spilt()           # dont need to spilt subject of email because usually it is short
+    body_content = body.lower().split()           # dont need to split subject of email because usually it is short
     for word in SUSPICIOUS_KEYWORDS:
         if  word in body_content:
             score += 1            
@@ -49,4 +49,5 @@ def keyword_position_scoring(subject,body):
     return score 
 
 def distance_check():
+
 
