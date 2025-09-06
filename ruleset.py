@@ -81,7 +81,7 @@ def suspicious_url_detection(body):
     
     return score, suspicious_urls
 
-def ruleset(email):
+def ruleset(email):     #TBD if we using dict
     score = 0
     sender_domain = email["from"].split("@")[-1]
 
@@ -95,8 +95,8 @@ def ruleset(email):
 
     return score, suspicious_urls
 
-def ruleset(email):
-    #TBD
+
+
 
 
 
