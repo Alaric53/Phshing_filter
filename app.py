@@ -4,15 +4,19 @@ import csv
 app = Flask(__name__)
 
 def evaluate_email(email_content):              #Function to evaluate email danger level
-    suspicious_keywords = ['urgent', 'bank', 'password', 'verify']
+    suspicious_keywords = [
+    "urgent", "immediately","important", "verify", "account", "password", "login", "sign in", "credential",
+    "security alert", "unusual activity", "suspended", "locked", "payment", "transaction", "banking", "refund",
+    "credit card", "debit", "prize", "lottery", "winner", "reset", "free", "offer", "limited time", "attention"
+    ] 
     #Total scoring for suspicious keywords TBI with whitelist postion scoring distance check URL detection
     score = sum(keyword in email_content.lower() for keyword in suspicious_keywords)
     if score >= 3:
-        danger_level = 'High Danger'
+        danger_level = "High Danger"
     elif score == 2:
-        danger_level = 'Medium Danger'
+        danger_level = "Medium Danger"
     else:
-        danger_level = 'Low Danger'
+        danger_level = "Low Danger"
     return score, danger_level
 
 # Extract email content from html/csv file
