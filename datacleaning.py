@@ -34,19 +34,25 @@ def datacleaning(data):
     stop_words = set(stopwords.words('english'))
     words = cleaned_text.split()
     words = [w for w in words if w not in stop_words]
+    cleaned_text = [" ".join(words)]
 
     #stemming words into base words,
     stemmer = PorterStemmer()
     words = [stemmer.stem(w) for w in words]
-    cleaned_text = [" ".join(words)]
+    ml_text = [" ".join(words)]
 
 
     vectorizer = TfidfVectorizer()
-    X = vectorizer.fit_transform(cleaned_text)
+    X = vectorizer.fit_transform(ml_text)
 
     # Convert to DataFrame
-    df = pd.DataFrame(X.toarray(), columns=vectorizer.get_feature_names_out())
+    idf = pd.DataFrame(X.toarray(), columns=vectorizer.get_feature_names_out())
 
-    print(df)
+    #CLEANED TEXT IS FOR RULE BASED
+    # idf is for ML
+    print(cleaned_text)
+    print(idf)
+    print(emails,domains,urls)
 
 datacleaning(data)
+
