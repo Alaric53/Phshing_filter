@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}Processing Result{% endblock %}
+{% block header %}Processing Complete{% endblock %}
+{% block subtitle %}Your email has been processed{% endblock %}
+
+{% block content %}
+<div class="file-info">
+    <div class="info-card">
+        <div class="info-label">Input Type</div>
+        <div class="info-value">{{ 'File Upload' if input_type == 'file' else 'Text Input' }}</div>
+    </div>
+    
+    <div class="info-card">
+        <div class="info-label">Original Name</div>
+        <div class="info-value">{{ filename }}</div>
+    </div>
+    
+    <div class="info-card">
+        <div class="info-label">Saved As</div>
+        <div class="info-value">{{ saved_as }}</div>
+    </div>
+    
+    <div class="info-card">
+        <div class="info-label">Result Length</div>
+        <div class="info-value">{{ result|length }} characters</div>
+    </div>
+</div>
+
+<div class="result-container">
+    <h3>Processed Content:</h3>
+    <div class="result-text">{{ result or 'No content extracted' }}</div>
+</div>
+
+{% if input_type == 'text' and original_text %}
+<div class="result-container">
+    <h3>Original Text:</h3>
+    <div class="result-text">{{ original_text }}</div>
+</div>
+{% endif %}
+
+<div class="navigation">
+    <a href="/" class="nav-link">Process Another</a>
+    <a href="/files" class="nav-link">View All Files</a>
+</div>
+{% endblock %}

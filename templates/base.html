@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Email Processing Tool{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="container fade-in">
+        <div class="header">
+            <h1>{% block header %}Email Processing Tool{% endblock %}</h1>
+            <p>{% block subtitle %}Upload email files or paste text for analysis{% endblock %}</p>
+        </div>
+        
+        <div class="content">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ 'success' if category == 'success' else 'error' }}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            {% block content %}{% endblock %}
+        </div>
+    </div>
+
+    <script>
+        function updateFileName(input) {
+            const fileName = input.files[0] ? input.files[0].name : 'No file selected';
+            const fileNameDiv = document.getElementById('file-name');
+            if (fileNameDiv) {
+                fileNameDiv.textContent = fileName;
+                fileNameDiv.style.display = input.files[0] ? 'block' : 'none';
+            }
+        }
+
+        function validateForm() {
+            const fileInput = document.getElementById('file');
+            const textInput = document.getElementById('text_input');
+            
+            const hasFile = fileInput && fileInput.files && fileInput.files.length > 0;
+            const hasText = textInput && textInput.value.trim().length > 0;
+            
+            if (!hasFile && !hasText) {
+                alert('Please select a file or enter some text.');
+                return false;
+            }
+            
+            if (hasFile && hasText) {
+                alert('Please choose either file upload OR text input, not both.');
+                return false;
+            }
+            
+            return true;
+        }
+
+        // Auto-resize textarea
+        document.addEventListener('DOMContentLoaded', function() {
+            const textarea = document.getElementById('text_input');
+            if (textarea) {
+                textarea.addEventListener('input', function() {
+                    this.style.height = 'auto';
+                    this.style.height = (this.scrollHeight) + 'px';
+                });
+            }
+        });
+    </script>
+</body>
+</html>

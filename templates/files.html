@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}Uploaded Files{% endblock %}
+{% block header %}File Management{% endblock %}
+{% block subtitle %}View all processed files{% endblock %}
+
+{% block content %}
+{% if files %}
+<div style="overflow-x: auto;">
+    <table class="file-table">
+        <thead>
+            <tr>
+                <th>Filename</th>
+                <th>Size</th>
+                <th>Modified</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for file in files %}
+            <tr>
+                <td class="filename">{{ file.filename }}</td>
+                <td>{{ "%.1f KB"|format(file.size / 1024) }}</td>
+                <td>{{ file.modified }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="empty-state">
+    <h3>No files uploaded yet</h3>
+    <p>Upload your first email file to get started!</p>
+</div>
+{% endif %}
+
+<div class="navigation">
+    <a href="/" class="nav-link">Back to Upload</a>
+</div>
+{% endblock %}

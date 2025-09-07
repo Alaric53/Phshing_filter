@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block content %}
+<form method="POST" action="/upload" enctype="multipart/form-data" onsubmit="return validateForm()">
+    <div class="form-group">
+        <label for="file">Upload Email File</label>
+        <div class="file-input-wrapper">
+            <input type="file" id="file" name="file" class="file-input" accept=".txt,.pdf,.eml,.msg" onchange="updateFileName(this)">
+            <label for="file" class="file-input-button">
+                Choose File
+            </label>
+        </div>
+        <div id="file-name" class="file-name hidden">No file selected</div>
+        
+        <div class="supported-formats">
+            <h4>Supported Formats:</h4>
+            <div class="format-list">
+                <span class="format-badge">.TXT</span>
+                <span class="format-badge">.PDF</span>
+                <span class="format-badge">.EML</span>
+                <span class="format-badge">.MSG</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="divider">
+        <span>OR</span>
+    </div>
+
+    <div class="form-group">
+        <label for="text_input">Paste Email Text</label>
+        <textarea id="text_input" name="text_input" placeholder="Paste your email content here...
+
+Example:
+Subject: Urgent Business Proposal
+From: john@example.com
+
+Dear friend,
+I have an urgent business proposal..."></textarea>
+    </div>
+
+    <button type="submit" class="submit-btn">Process Email</button>
+</form>
+
+<div class="navigation">
+    <a href="/files" class="nav-link">View Uploaded Files</a>
+</div>
+{% endblock %}

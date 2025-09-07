@@ -1,0 +1,79 @@
+
+Dear Prof,
+
+Ahh i see Thank you so much!! I am so so sorry for disturbing you on the weekend T_T
+
+Wish you a nice fulfilling dinner 🙂
+
+
+Regards,
+Aurelius Ng Ker Fong
+________________________________________
+From: Zhang Zhengchen <zhengchen.zhang@singaporetech.edu.sg>
+Sent: Saturday, 6 September 2025 6:04 pm
+To: AURELIUS NG KER FONG <2500612@sit.singaporetech.edu.sg>
+Subject: RE: Comments on document i drafted 
+ 
+SIT Internal
+
+Hi Aurelius, 
+ 
+yes you get it. Simply calling machine learning models does not help.
+ 
+Zhengchen
+ 
+ 
+From: AURELIUS NG KER FONG <2500612@sit.singaporetech.edu.sg> 
+Sent: Saturday, September 6, 2025 12:04 PM
+To: Zhang Zhengchen <zhengchen.zhang@singaporetech.edu.sg>
+Subject: Re: Comments on document i drafted
+ 
+Dear Prof, 
+
+Ah I understand. So although we can use machine learning to aid our process for completing the problem. Its the code behind it, how we structure them how we connect it to each other and whether they make logical sense. 
+
+In that case, even a machine learning model is not really useful and you would rather see a properly implemented (from my own understanding) an example, a dictionary or linked lists to aid in the risk scoring function. 
+
+Do let me know if that's the case. Thank you so much and sorry for always spamming/troubling you T_T. 
+ 
+ 
+Regards,
+Aurelius Ng Ker Fong
+________________________________________
+From: Zhang Zhengchen <zhengchen.zhang@singaporetech.edu.sg>
+Sent: Friday, 5 September 2025 12:04 pm
+To: AURELIUS NG KER FONG <2500612@sit.singaporetech.edu.sg>
+Subject: RE: Comments on document i drafted 
+ 
+SIT Internal
+ 
+Hi Aurelius,
+ 
+I think it is good enough, although a little bit too complex to me. I think you still emphasis on applying the machine learning models, actually we should focus on the using data structures like dictionary, tree, linked lists etc. so please submit first, and we can discuss more later.
+ 
+Zhengchen
+ 
+ 
+From: AURELIUS NG KER FONG <2500612@sit.singaporetech.edu.sg> 
+Sent: Friday, September 5, 2025 12:10 AM
+To: Zhang Zhengchen <zhengchen.zhang@singaporetech.edu.sg>
+Subject: Re: Comments on document i drafted
+ 
+Dear Prof,
+
+Here is the file. Thanks!
+
+Warmest Regards,
+Aurelius Ng Ker Fong
+________________________________________
+From: AURELIUS NG KER FONG <2500612@sit.singaporetech.edu.sg>
+Sent: Thursday, 4 September 2025 10:24 pm
+To: Zhang Zhengchen <zhengchen.zhang@singaporetech.edu.sg>
+Subject: Comments on document i drafted 
+ 
+Dear Prof, 
+Hi Prof, I have done a draft of the document for my group based on our discussion recently. Do let me know if this is alright? Or if you have any comments 🙂 
+
+If any issues, do let me know I will relay it to the team haha. Thanks a lot!
+Warm Regards,
+Aurelius Ng Ker Fong
