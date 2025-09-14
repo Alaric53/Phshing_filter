@@ -2,45 +2,120 @@
 
 {% block title %}Processing Result{% endblock %}
 {% block header %}Processing Complete{% endblock %}
-{% block subtitle %}Your email has been processed{% endblock %}
+{% block subtitle %}Your email has been analyzed and structured{% endblock %}
 
 {% block content %}
-<div class="file-info">
+<!-- Performance metrics display grid for transparency and monitoring -->
+<div class="performance-info">
+    <!-- Input length metric showing original email size -->
     <div class="info-card">
-        <div class="info-label">Input Type</div>
-        <div class="info-value">{{ 'File Upload' if input_type == 'file' else 'Text Input' }}</div>
+        <div class="info-label">Input Length</div>
+        <div class="info-value">{{ input_length }}</div>
     </div>
     
+    <!-- Output length metric showing processed email size -->
     <div class="info-card">
-        <div class="info-label">Original Name</div>
-        <div class="info-value">{{ filename }}</div>
+        <div class="info-label">Output Length</div>
+        <div class="info-value">{{ output_length }}</div>
     </div>
     
+    <!-- Processing time metric for performance monitoring -->
     <div class="info-card">
-        <div class="info-label">Saved As</div>
-        <div class="info-value">{{ saved_as }}</div>
+        <div class="info-label">Processing Time</div>
+        <div class="info-value">{{ processing_time }}</div>
     </div>
     
+    <!-- Throughput metric showing processing speed in KB/s -->
     <div class="info-card">
-        <div class="info-label">Result Length</div>
-        <div class="info-value">{{ result|length }} characters</div>
+        <div class="info-label">Throughput</div>
+        <div class="info-value">{{ throughput }}</div>
     </div>
 </div>
 
+<!-- Main results container showing structured email analysis -->
 <div class="result-container">
-    <h3>Processed Content:</h3>
-    <div class="result-text">{{ result or 'No content extracted' }}</div>
+    <h3>Structured Email Analysis:</h3>
+    <!-- Structured output preserving forensic headers for security analysis -->
+    <div class="result-text structured" id="result-text">{{ result or 'No content extracted' }}</div>
+    
+    <!-- Action buttons for user interaction with results -->
+    <div class="result-actions">
+        <!-- Copy button using JavaScript clipboard API with fallback -->
+        <button type="button" class="copy-btn" onclick="copyToClipboard({{ result|tojson }})">
+            Copy to Clipboard
+        </button>
+        <!-- Download button creating text file with blob API -->
+        <button type="button" class="copy-btn" onclick="downloadAsText()">
+            Download as Text
+        </button>
+    </div>
 </div>
 
-{% if input_type == 'text' and original_text %}
+<!-- Original input preview container for comparison -->
 <div class="result-container">
-    <h3>Original Text:</h3>
-    <div class="result-text">{{ original_text }}</div>
+    <h3>Original Input (Preview):</h3>
+    <!-- Truncated original text for reference (first 500 chars) -->
+    <div class="result-text original-text">{{ original_text }}</div>
 </div>
-{% endif %}
 
+<!-- Security analysis guidance section for phishing detection -->
+<div class="analysis-tips">
+    <h3>Security Analysis Guide:</h3>
+    <div class="tips-grid">
+        <!-- Sender analysis guidance focusing on spoofing detection -->
+        <div class="tip-card">
+            <h4>Sender Analysis</h4>
+            <p>Check if display name matches email domain. Phishing emails often use trusted names with suspicious domains.</p>
+        </div>
+        
+        <!-- URL inspection guidance for link verification -->
+        <div class="tip-card">
+            <h4>URL Inspection</h4>
+            <p>Examine any links in the message body. Hover over links to see actual destinations before clicking.</p>
+        </div>
+        
+        <!-- Urgency language detection for social engineering tactics -->
+        <div class="tip-card">
+            <h4>Urgency Language</h4>
+            <p>Look for pressure tactics like "immediate action required" or "account will be suspended".</p>
+        </div>
+        
+        <!-- Reply-To mismatch detection for phishing indicators -->
+        <div class="tip-card">
+            <h4>Reply-To Mismatch</h4>
+            <p>Check if Reply-To address differs from sender address - common phishing technique.</p>
+        </div>
+    </div>
+</div>
+
+<!-- Navigation section for continued workflow -->
 <div class="navigation">
-    <a href="/" class="nav-link">Process Another</a>
-    <a href="/files" class="nav-link">View All Files</a>
+    <a href="/" class="nav-link">Process Another Email</a>
+    <a href="/stats" class="nav-link">Performance Stats</a>
 </div>
+
+<script>
+/**
+ * Downloads the processed analysis as a text file using blob API
+ * Creates downloadable file without server round-trip for efficiency
+ */
+    function downloadAsText() {
+        const content = {{ result|tojson }}; // Jinja2 safely converts Python string to JavaScript string
+        const blob = new Blob([content], { type: 'text/plain' }); // Create blob object for file download
+        const url = window.URL.createObjectURL(blob); // Generate temporary URL for blob
+        
+        // Create temporary anchor element for download trigger
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'processed_email_analysis.txt'; // Set filename for download
+        
+        // Trigger download and cleanup
+        document.body.appendChild(a);
+        a.click(); // Programmatically click to start download
+        document.body.removeChild(a); // Remove temporary element
+        window.URL.revokeObjectURL(url); // Clean up memory by revoking blob URL
+        
+        showNotification('Analysis downloaded!'); // User feedback for successful download
+    }
+</script>
 {% endblock %}

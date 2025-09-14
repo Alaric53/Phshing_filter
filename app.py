@@ -1,550 +1,431 @@
-#!/usr/bin/env python3
-"""
-app.py - Flask Email Processing Web Application
-Calls main.py in the backend to get clean plain text output
-"""
-
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 import os
-import sys
-from werkzeug.utils import secure_filename
-from datetime import datetime
-import uuid
+import time
+import json
 
-# Ensure we can import our modules
-current_dir = os.path.dirname(os.path.abspath(__file__))
-if current_dir not in sys.path:
-    sys.path.insert(0, current_dir)
-
-# Import the main function that returns clean text
+# Import our email processor
 try:
-    from main import main as get_clean_text
-    HANDLER_AVAILABLE = True
-    print("✓ Successfully imported main.py")
+    from text_processor import process_email_text, get_processor
+    PROCESSOR_AVAILABLE = True
+    print("✓ Email processor loaded successfully")
 except ImportError as e:
-    print(f"✗ Failed to import main.py: {e}")
-    HANDLER_AVAILABLE = False
+    print(f"✗ Failed to load email processor: {e}")
+    PROCESSOR_AVAILABLE = False
     
-    def get_clean_text(file_path):
-        return f"Error: Could not import main.py - {e}"
+    # Create a fake function if the real one failed to load
+    def process_email_text(text, debug=False):
+        return f"Error: Could not load email processor - {e}"
 
+# Global variable to store the latest processed text for pipeline access
+latest_processed_text = ""
+processing_queue = []  # Queue for multiple texts if needed
+
+def store_processed_text(processed_text: str, original_length: int, processing_time: float):
+    """
+    Store processed text for external pipeline access.
+    This function makes the cleaned text available for other programs via multiple methods.
+    """
+    global latest_processed_text, processing_queue
+    
+    # Store the latest processed text globally (for same-process access)
+    latest_processed_text = processed_text
+    
+    # Add to processing queue with metadata
+    processing_queue.append({
+        'text': processed_text,
+        'timestamp': time.perf_counter(),
+        'original_length': original_length,
+        'processed_length': len(processed_text),
+        'processing_time': processing_time
+    })
+    
+    # Keep only last 10 processed texts in queue
+    if len(processing_queue) > 10:
+        processing_queue.pop(0)
+    
+    # ALSO save to file for cross-process access
+    try:
+        # Write processed text to file
+        with open('processed_text.txt', 'w', encoding='utf-8') as f:
+            f.write(processed_text)
+        
+        # Write metadata to separate file
+        metadata = {
+            'timestamp': time.time(),
+            'original_length': original_length,
+            'processed_length': len(processed_text),
+            'processing_time': processing_time
+        }
+        with open('processing_metadata.json', 'w', encoding='utf-8') as f:
+            json.dump(metadata, f, indent=2)
+        
+        print(f"✓ Processed text stored for pipeline access: {len(processed_text)} characters")
+        print("✓ Text also saved to files for cross-process access")
+        
+    except Exception as e:
+        print(f"Warning: Could not save to files: {e}")
+    
+def get_latest_processed_text() -> str:
+    """
+    Function for external programs to get the latest processed text.
+    Your pipeline can import this function from app.py
+    """
+    global latest_processed_text
+    return latest_processed_text
+
+def get_processing_queue() -> list:
+    """
+    Get all recent processed texts with metadata.
+    Useful for batch processing or pipeline monitoring.
+    """
+    global processing_queue
+    return processing_queue.copy()  # Return copy to prevent external modification
+
+def clear_processing_queue():
+    """Clear the processing queue (useful for pipeline cleanup)."""
+    global processing_queue, latest_processed_text
+    processing_queue.clear()
+    latest_processed_text = ""
+    print("Processing queue cleared")
+
+# Create the Flask application
 app = Flask(__name__)
-app.secret_key = 'change-this-in-production'
 
-# Configuration
-UPLOAD_FOLDER = './instance/temp'
-ALLOWED_EXTENSIONS = {'txt', 'pdf', 'eml', 'msg'}
-MAX_FILE_SIZE = 16 * 1024 * 1024  # 16MB
+# Set a secret key (used for security features like flash messages)
+app.secret_key = os.environ.get('SECRET_KEY', 'change-this-in-production')
 
-# Ensure upload directory exists
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-app.config['MAX_CONTENT_LENGTH'] = MAX_FILE_SIZE
+# Configure the application
+app.config.update({
+    'MAX_CONTENT_LENGTH': 1 * 1024 * 1024,  # 1MB limit for text input
+    'SEND_FILE_MAX_AGE_DEFAULT': 31536000    # Cache static files for 1 year
+})
 
+# Statistics to track how the application is performing
+request_stats = {
+    'total_requests': 0,        # How many requests we've handled
+    'total_processing_time': 0, # Total time spent processing
+    'average_text_length': 0,   # Average length of text processed
+    'max_text_length': 0        # Longest text we've processed
+}
 
-def allowed_file(filename):
-    """Check if file extension is allowed."""
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+@app.before_request
+def before_request():
+    """
+    This function runs BEFORE each request is processed.
+    
+    Like starting a stopwatch when someone asks you a question.
+    """
+    request.start_time = time.perf_counter()
 
-
-def generate_unique_filename(original_filename):
-    """Generate unique filename to avoid conflicts."""
-    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-    unique_id = str(uuid.uuid4())[:8]
-    name, ext = os.path.splitext(original_filename)
-    safe_name = secure_filename(name)
-    return f"{timestamp}_{unique_id}_{safe_name}{ext}"
-
+@app.after_request
+def after_request(response):
+    """
+    This function runs AFTER each request is processed.
+    
+    Like stopping the stopwatch and recording how long it took.
+    """
+    if hasattr(request, 'start_time'):
+        processing_time = time.perf_counter() - request.start_time
+        request_stats['total_requests'] += 1
+        request_stats['total_processing_time'] += processing_time
+    return response
 
 @app.route('/')
 def index():
-    """Main page with upload form and text input."""
+    """
+    This handles requests to the home page (/).
+    
+    When someone visits your website, this function runs and
+    shows them the main page with the input form.
+    """
     return render_template('index.html')
 
-
-@app.route('/upload', methods=['POST'])
-def upload_file():
-    """Handle file upload and text input - returns clean text via main.py."""
+@app.route('/process', methods=['POST'])
+def process_text():
+    """
+    This handles when users submit email text for processing.
+    
+    It takes the text, processes it, and automatically stores the result
+    for external pipeline access.
+    """
     try:
-        # Check if it's a file upload or text input
-        if 'file' in request.files and request.files['file'].filename:
-            # Handle file upload
-            file = request.files['file']
-            
-            if file and allowed_file(file.filename):
-                # Generate unique filename
-                unique_filename = generate_unique_filename(file.filename)
-                file_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
-                
-                # Save the file
-                file.save(file_path)
-                
-                # Debug info
-                print(f"File saved: {file_path}")
-                print(f"File size: {os.path.getsize(file_path)} bytes")
-                print(f"File exists: {os.path.exists(file_path)}")
-                
-                # Call main.py to get clean text output
-                if HANDLER_AVAILABLE:
-                    print("Calling main.py for processing...")
-                    clean_text = get_clean_text(file_path)
-                    print(f"main.py returned {len(clean_text)} characters")
-                    print(f"Preview: {clean_text[:100]}...")
-                else:
-                    clean_text = "Error: EmailInputHandler not available"
-                
-                flash(f'File "{file.filename}" processed successfully!', 'success')
-                return render_template('result.html', 
-                                     filename=file.filename,
-                                     saved_as=unique_filename,
-                                     result=clean_text,
-                                     input_type='file')
-            else:
-                flash('Invalid file type. Please upload .txt, .pdf, .eml, or .msg files.', 'error')
-                return redirect(url_for('index'))
+        # Start timing this request
+        processing_start = time.perf_counter()
         
-        elif 'text_input' in request.form and request.form['text_input'].strip():
-            # Handle text input
-            text_content = request.form['text_input'].strip()
-            
-            if text_content:
-                # Generate unique filename for text file
-                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-                unique_id = str(uuid.uuid4())[:8]
-                txt_filename = f"text_input_{timestamp}_{unique_id}.txt"
-                file_path = os.path.join(app.config['UPLOAD_FOLDER'], txt_filename)
-                
-                # Save text to file
-                with open(file_path, 'w', encoding='utf-8') as f:
-                    f.write(text_content)
-                
-                print(f"Text saved to: {file_path}")
-                
-                # Call main.py to get clean text output
-                if HANDLER_AVAILABLE:
-                    print("Calling main.py for text processing...")
-                    clean_text = get_clean_text(file_path)
-                    print(f"main.py returned {len(clean_text)} characters")
-                else:
-                    clean_text = "Error: EmailInputHandler not available"
-                
-                flash('Text input processed successfully!', 'success')
-                return render_template('result.html',
-                                     filename='Text Input',
-                                     saved_as=txt_filename,
-                                     result=clean_text,
-                                     input_type='text',
-                                     original_text=text_content)
-            else:
-                flash('Please enter some text or select a file.', 'error')
-                return redirect(url_for('index'))
+        # Get the text the user submitted
+        text_content = request.form.get('text_input', '').strip()
         
-        else:
-            flash('Please select a file or enter text.', 'error')
+        # Check if they actually entered something
+        if not text_content:
+            flash('Please enter some email text to process.', 'error')
             return redirect(url_for('index'))
+        
+        # Update our statistics
+        text_length = len(text_content)
+        request_stats['max_text_length'] = max(request_stats['max_text_length'], text_length)
+        
+        # Calculate running average of text length
+        total_requests = request_stats['total_requests']
+        if total_requests > 0:
+            current_avg = request_stats['average_text_length']
+            request_stats['average_text_length'] = (
+                (current_avg * (total_requests - 1) + text_length) / total_requests
+            )
+        else:
+            request_stats['average_text_length'] = text_length
+        
+        # Process the email text
+        if PROCESSOR_AVAILABLE:
+            clean_text = process_email_text(text_content, debug=False)
+        else:
+            clean_text = "Error: Email processor not available"
+        
+        # Calculate how long processing took
+        processing_time = time.perf_counter() - processing_start
+        
+        # Store processed text for external pipeline access
+        store_processed_text(clean_text, text_length, processing_time)
+        
+        # Show success message
+        flash('Email text processed successfully and stored for pipeline access!', 'success')
+        
+        # Show the results page
+        return render_template('result.html',
+                             original_text=text_content[:500] + ('...' if len(text_content) > 500 else ''),
+                             result=clean_text,
+                             processing_time=f"{processing_time:.4f}s",
+                             input_length=f"{text_length:,} characters",
+                             output_length=f"{len(clean_text):,} characters",
+                             throughput=f"{text_length / processing_time / 1000:.1f} KB/s" if processing_time > 0 else "N/A")
     
     except Exception as e:
-        print(f"Upload error: {str(e)}")
-        import traceback
-        traceback.print_exc()
-        flash(f'Error processing request: {str(e)}', 'error')
+        flash(f'Error processing text: {str(e)}', 'error')
         return redirect(url_for('index'))
-
 
 @app.route('/api/process', methods=['POST'])
 def api_process():
-    """API endpoint that returns only clean text (like main.py command line)."""
+    """
+    API endpoint that returns just the processed text and stores it for pipeline access.
+    
+    This is for other programs that want to use our email processor
+    without the web interface.
+    """
     try:
-        if 'file' in request.files:
-            file = request.files['file']
-            if file and allowed_file(file.filename):
-                unique_filename = generate_unique_filename(file.filename)
-                file_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
-                file.save(file_path)
-                
-                # Call main.py and return only the clean text
-                clean_text = get_clean_text(file_path)
-                return clean_text, 200, {'Content-Type': 'text/plain; charset=utf-8'}
-            else:
-                return "Invalid file type", 400
+        processing_start = time.perf_counter()
         
-        elif request.is_json and 'text' in request.json:
-            text_content = request.json['text']
-            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-            unique_id = str(uuid.uuid4())[:8]
-            txt_filename = f"api_text_{timestamp}_{unique_id}.txt"
-            file_path = os.path.join(app.config['UPLOAD_FOLDER'], txt_filename)
-            
-            with open(file_path, 'w', encoding='utf-8') as f:
-                f.write(text_content)
-            
-            # Call main.py and return only the clean text
-            clean_text = get_clean_text(file_path)
-            return clean_text, 200, {'Content-Type': 'text/plain; charset=utf-8'}
-        
+        # Handle different ways of sending data
+        if request.is_json:
+            # JSON data (from programs)
+            data = request.get_json()
+            text_content = data.get('text', '')
         else:
-            return "No file or text provided", 400
+            # Form data (from web forms)
+            text_content = request.form.get('text', '')
+        
+        # Check if they sent any text
+        if not text_content.strip():
+            return "No text provided", 400  # 400 = Bad Request
+        
+        text_length = len(text_content)
+        
+        # Process the text
+        if PROCESSOR_AVAILABLE:
+            clean_text = process_email_text(text_content.strip(), debug=False)
+        else:
+            clean_text = "Error: Processor not available"
+        
+        # Calculate processing time and store for pipeline access
+        processing_time = time.perf_counter() - processing_start
+        store_processed_text(clean_text, text_length, processing_time)
+        
+        # Return just the processed text
+        return clean_text, 200, {'Content-Type': 'text/plain; charset=utf-8'}
     
     except Exception as e:
-        return f"Error: {str(e)}", 500
+        return f"Error: {str(e)}", 500  # 500 = Internal Server Error
 
-
-@app.route('/api/upload', methods=['POST'])
-def api_upload():
-    """API endpoint with JSON response (includes metadata)."""
+@app.route('/api/process_detailed', methods=['POST'])
+def api_process_detailed():
+    """
+    API endpoint that returns detailed information about processing and stores for pipeline access.
+    
+    This includes the processed text plus statistics and metadata.
+    """
     try:
-        if 'file' in request.files:
-            file = request.files['file']
-            if file and allowed_file(file.filename):
-                unique_filename = generate_unique_filename(file.filename)
-                file_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
-                file.save(file_path)
-                
-                # Call main.py to get clean text
-                clean_text = get_clean_text(file_path)
-                
-                return jsonify({
-                    'success': True,
-                    'filename': file.filename,
-                    'saved_as': unique_filename,
-                    'result': clean_text,
-                    'length': len(clean_text)
-                })
-            else:
-                return jsonify({'success': False, 'error': 'Invalid file type'})
+        processing_start = time.perf_counter()
         
-        elif request.is_json and 'text' in request.json:
-            text_content = request.json['text']
-            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-            unique_id = str(uuid.uuid4())[:8]
-            txt_filename = f"api_text_{timestamp}_{unique_id}.txt"
-            file_path = os.path.join(app.config['UPLOAD_FOLDER'], txt_filename)
-            
-            with open(file_path, 'w', encoding='utf-8') as f:
-                f.write(text_content)
-            
-            clean_text = get_clean_text(file_path)
-            
-            return jsonify({
-                'success': True,
-                'filename': 'API Text Input',
-                'saved_as': txt_filename,
-                'result': clean_text,
-                'length': len(clean_text)
-            })
-        
+        # Get the input text
+        if request.is_json:
+            data = request.get_json()
+            text_content = data.get('text', '')
         else:
-            return jsonify({'success': False, 'error': 'No file or text provided'})
+            text_content = request.form.get('text', '')
+        
+        if not text_content.strip():
+            return jsonify({'success': False, 'error': 'No text provided'})
+        
+        text_content = text_content.strip()
+        text_length = len(text_content)
+        
+        # Process the text and get detailed stats
+        if PROCESSOR_AVAILABLE:
+            processor = get_processor()
+            clean_text = processor.process_text(text_content, debug=False)
+            stats = processor.get_performance_stats()
+        else:
+            clean_text = "Error: Processor not available"
+            stats = {}
+        
+        processing_time = time.perf_counter() - processing_start
+        
+        # Store processed text for pipeline access
+        store_processed_text(clean_text, text_length, processing_time)
+        
+        # Return detailed JSON response
+        return jsonify({
+            'success': True,
+            'input_length': text_length,
+            'output_length': len(clean_text),
+            'result': clean_text,
+            'processing_time': f"{processing_time:.4f}s",
+            'throughput_kbps': text_length / processing_time / 1000 if processing_time > 0 else 0,
+            'processor_stats': stats,
+            'stored_for_pipeline': True  # Indicate text is available for pipeline access
+        })
     
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
 
+@app.route('/api/get_latest', methods=['GET'])
+def get_latest():
+    """
+    API endpoint for external programs to get the latest processed text.
+    Your pipeline can call this to get the most recent processed result.
+    """
+    global latest_processed_text
+    
+    if latest_processed_text:
+        return jsonify({
+            'success': True,
+            'text': latest_processed_text,
+            'length': len(latest_processed_text),
+            'timestamp': time.time()
+        })
+    else:
+        return jsonify({
+            'success': False,
+            'message': 'No processed text available'
+        })
 
-@app.route('/files')
-def list_files():
-    """List all uploaded files."""
+@app.route('/api/get_queue', methods=['GET'])
+def get_queue():
+    """
+    API endpoint to get all recent processed texts with metadata.
+    Useful for batch processing in your pipeline.
+    """
+    global processing_queue
+    
+    return jsonify({
+        'success': True,
+        'count': len(processing_queue),
+        'items': processing_queue
+    })
+
+@app.route('/api/clear_queue', methods=['POST'])
+def clear_queue():
+    """
+    API endpoint to clear the processing queue.
+    Your pipeline can call this after consuming the data.
+    """
+    clear_processing_queue()
+    return jsonify({
+        'success': True,
+        'message': 'Processing queue cleared'
+    })
+
+@app.route('/stats')
+def performance_stats():
+    """
+    Show performance statistics about the application.
+    
+    Like a dashboard showing how well the system is working.
+    """
     try:
-        files = []
-        for filename in os.listdir(app.config['UPLOAD_FOLDER']):
-            file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            if os.path.isfile(file_path):
-                stat = os.stat(file_path)
-                files.append({
-                    'filename': filename,
-                    'size': stat.st_size,
-                    'modified': datetime.fromtimestamp(stat.st_mtime).strftime('%Y-%m-%d %H:%M:%S')
-                })
+        # Calculate average processing time
+        avg_processing_time = (
+            request_stats['total_processing_time'] / request_stats['total_requests']
+            if request_stats['total_requests'] > 0 else 0
+        )
         
-        files.sort(key=lambda x: x['modified'], reverse=True)
-        return render_template('files.html', files=files)
+        # Get processor-specific stats if available
+        processor_stats = {}
+        if PROCESSOR_AVAILABLE:
+            processor = get_processor()
+            processor_stats = processor.get_performance_stats()
+        
+        # Return all statistics as JSON
+        return jsonify({
+            'application_stats': {
+                'total_requests': request_stats['total_requests'],
+                'average_processing_time': f"{avg_processing_time:.4f}s",
+                'average_text_length': f"{request_stats['average_text_length']:.0f} chars",
+                'max_text_length': f"{request_stats['max_text_length']:,} chars"
+            },
+            'processor_stats': processor_stats,
+            'processor_available': PROCESSOR_AVAILABLE
+        })
     
     except Exception as e:
-        flash(f'Error listing files: {str(e)}', 'error')
-        return redirect(url_for('index'))
-
-
-@app.route('/process_and_analyze', methods=['POST'])
-def process_and_analyze():
-    """Process email and run datacleaning analysis."""
-    try:
-        # Import datacleaning function
-        from datacleaning import datacleaning
-        
-        if 'file' in request.files and request.files['file'].filename:
-            file = request.files['file']
-            
-            if file and allowed_file(file.filename):
-                # Save file
-                unique_filename = generate_unique_filename(file.filename)
-                file_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
-                file.save(file_path)
-                
-                # Get clean text from main.py
-                clean_text = get_clean_text(file_path)
-                
-                if not clean_text:
-                    return jsonify({'success': False, 'error': 'No text extracted from file'})
-                
-                # Run datacleaning analysis
-                df, emails, domains, urls = datacleaning(clean_text)
-                
-                # Convert DataFrame to dict for JSON response
-                tfidf_features = df.to_dict('records')[0] if len(df) > 0 else {}
-                
-                return jsonify({
-                    'success': True,
-                    'filename': file.filename,
-                    'clean_text': clean_text,
-                    'analysis': {
-                        'emails_found': emails,
-                        'domains_found': domains,
-                        'urls_found': urls,
-                        'tfidf_features': len(tfidf_features),
-                        'top_features': dict(sorted(tfidf_features.items(), key=lambda x: x[1], reverse=True)[:10])
-                    }
-                })
-            else:
-                return jsonify({'success': False, 'error': 'Invalid file type'})
-        
-        elif request.is_json and 'text' in request.json:
-            text_content = request.json['text']
-            
-            # Save text to temp file
-            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-            unique_id = str(uuid.uuid4())[:8]
-            txt_filename = f"api_text_{timestamp}_{unique_id}.txt"
-            file_path = os.path.join(app.config['UPLOAD_FOLDER'], txt_filename)
-            
-            with open(file_path, 'w', encoding='utf-8') as f:
-                f.write(text_content)
-            
-            # Process with main.py
-            clean_text = get_clean_text(file_path)
-            
-            # Run datacleaning analysis
-            df, emails, domains, urls = datacleaning(clean_text)
-            tfidf_features = df.to_dict('records')[0] if len(df) > 0 else {}
-            
-            return jsonify({
-                'success': True,
-                'clean_text': clean_text,
-                'analysis': {
-                    'emails_found': emails,
-                    'domains_found': domains,
-                    'urls_found': urls,
-                    'tfidf_features': len(tfidf_features),
-                    'top_features': dict(sorted(tfidf_features.items(), key=lambda x: x[1], reverse=True)[:10])
-                }
-            })
-        
-        else:
-            return jsonify({'success': False, 'error': 'No file or text provided'})
-    
-    except Exception as e:
-        return jsonify({'success': False, 'error': f'Analysis failed: {str(e)}'})
-
-
-@app.route('/verify_output')
-def verify_output():
-    """Verify that main.py output matches expectations."""
-    try:
-        # Test with sample data (similar to your example)
-        test_data = """Subject: RE save our soul
-From: kabila72b@37.com
-
-Dear friend, I am Mrs. Deborah Kabila, one of the wives of Late President Laurent D. Kabila of Democratic Republic of Congo (DRC). 
-
-Consequent upon the assassination of my husband, I am in possession of USD 58,000,000 (Fifty Eight Million US Dollars Only) being funds earlier earmarked for special projects.
-
-Please contact me for more details.
-
-Best regards,
-Deborah Kabila (Mrs.)"""
-        
-        # Save test data to file
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        test_file = os.path.join(app.config['UPLOAD_FOLDER'], f"verify_test_{timestamp}.txt")
-        
-        with open(test_file, 'w', encoding='utf-8') as f:
-            f.write(test_data)
-        
-        # Process with main.py (what Flask does)
-        main_output = get_clean_text(test_file)
-        
-        # Clean up
-        os.remove(test_file)
-        
-        # Return HTML response directly (no separate file needed)
-        html_content = f"""
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Output Verification</title>
-    <style>
-        body {{ font-family: monospace; padding: 20px; background: #f5f5f5; }}
-        .container {{ max-width: 1000px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; }}
-        .input-box {{ background: #f5f5f5; padding: 15px; border-radius: 5px; border: 1px solid #ddd; }}
-        .output-box {{ background: #e8f5e8; padding: 15px; border-radius: 5px; border: 2px solid green; }}
-        .nav-links {{ margin-top: 30px; }}
-        .nav-links a {{ color: blue; text-decoration: none; margin-right: 20px; }}
-        .status {{ color: green; font-weight: bold; }}
-        .error {{ color: red; font-weight: bold; }}
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>main.py Output Verification</h1>
-        
-        <h2>Input Data:</h2>
-        <pre class="input-box">{test_data}</pre>
-        
-        <h2>main.py Output (what goes to datacleaning.py):</h2>
-        <pre class="output-box">{main_output}</pre>
-        
-        <h2>Analysis:</h2>
-        <ul>
-            <li><strong>Output Length:</strong> {len(main_output)} characters</li>
-            <li><strong>Contains Subject:</strong> <span class="{'status' if 'save our soul' in main_output.lower() else 'error'}">{'Yes' if 'save our soul' in main_output.lower() else 'No'}</span></li>
-            <li><strong>Contains Sender:</strong> <span class="{'status' if 'kabila' in main_output.lower() else 'error'}">{'Yes' if 'kabila' in main_output.lower() else 'No'}</span></li>
-            <li><strong>Contains Body:</strong> <span class="{'status' if 'deborah' in main_output.lower() else 'error'}">{'Yes' if 'deborah' in main_output.lower() else 'No'}</span></li>
-            <li><strong>Clean Format:</strong> <span class="{'status' if main_output and len(main_output.strip()) > 0 else 'error'}">{'Yes' if main_output and len(main_output.strip()) > 0 else 'No'}</span></li>
-        </ul>
-        
-        <div class="status">
-            <p><strong>This output can be fed directly into datacleaning.py</strong></p>
-        </div>
-        
-        <div class="nav-links">
-            <a href="/">← Back to Upload</a>
-            <a href="/test">Run Basic Test</a>
-        </div>
-    </div>
-</body>
-</html>
-        """
-        
-        return html_content
-        
-    except Exception as e:
-        return f"""
-<!DOCTYPE html>
-<html>
-<head><title>Verification Error</title></head>
-<body style="font-family: Arial; padding: 20px;">
-    <h1>Verification Failed</h1>
-    <p>Error: {str(e)}</p>
-    <a href="/">← Back to Upload</a>
-</body>
-</html>
-        """
-
-
-@app.route('/test')
-def test_handler():
-    """Test route to verify main.py is working."""
-    if not HANDLER_AVAILABLE:
-        return """
-<!DOCTYPE html>
-<html>
-<head><title>Test Failed</title></head>
-<body style="font-family: Arial; padding: 20px;">
-    <h1>Error</h1>
-    <p>main.py could not be imported</p>
-    <a href="/">← Back to Upload</a>
-</body>
-</html>
-        """
-    
-    # Test with a simple text
-    test_text = "Subject: Test Email\nFrom: test@example.com\nThis is a test message."
-    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-    test_file = os.path.join(app.config['UPLOAD_FOLDER'], f"test_{timestamp}.txt")
-    
-    try:
-        # Create test file
-        with open(test_file, 'w', encoding='utf-8') as f:
-            f.write(test_text)
-        
-        # Process with main.py
-        result = get_clean_text(test_file)
-        
-        # Clean up
-        os.remove(test_file)
-        
-        return f"""
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Test Results</title>
-    <style>
-        body {{ font-family: Arial; padding: 20px; background: #f5f5f5; }}
-        .container {{ max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; }}
-        .test-box {{ background: #f0f8ff; padding: 15px; border-radius: 5px; border: 1px solid #ddd; margin: 10px 0; }}
-        .result-box {{ background: #f0fff0; padding: 15px; border-radius: 5px; border: 1px solid green; margin: 10px 0; }}
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>Test Successful</h1>
-        
-        <h3>Input:</h3>
-        <pre class="test-box">{test_text}</pre>
-        
-        <h3>Output from main.py:</h3>
-        <pre class="result-box">{result}</pre>
-        
-        <p><strong>Length:</strong> {len(result)} characters</p>
-        
-        <div style="margin-top: 30px;">
-            <a href="/" style="color: blue;">← Back to Upload</a>
-            <a href="/verify_output" style="color: blue; margin-left: 20px;">Detailed Verification</a>
-        </div>
-    </div>
-</body>
-</html>
-        """
-    
-    except Exception as e:
-        return f"""
-<!DOCTYPE html>
-<html>
-<head><title>Test Failed</title></head>
-<body style="font-family: Arial; padding: 20px;">
-    <h1>Test Failed</h1>
-    <p>Error: {str(e)}</p>
-    <a href="/">← Back to Upload</a>
-</body>
-</html>
-        """
-
+        return jsonify({'error': str(e)})
 
 @app.errorhandler(413)
 def too_large(e):
-    """Handle file too large error."""
-    flash('File is too large. Maximum size is 16MB.', 'error')
+    """Handle when someone tries to submit text that's too big."""
+    flash('Text input is too large. Maximum size is 1MB.', 'error')
     return redirect(url_for('index'))
-
 
 @app.errorhandler(404)
 def page_not_found(e):
-    """Handle 404 errors."""
+    """Handle when someone visits a page that doesn't exist."""
     return render_template('404.html'), 404
 
+@app.errorhandler(500)
+def internal_server_error(e):
+    """Handle internal server errors gracefully."""
+    flash('An internal error occurred. Please try again.', 'error')
+    return redirect(url_for('index'))
 
 if __name__ == '__main__':
-    print("=" * 60)
-    print("Flask Email Processing App")
-    print("=" * 60)
-    print(f"Working directory: {os.getcwd()}")
-    print(f"Upload folder: {os.path.abspath(UPLOAD_FOLDER)}")
-    print(f"Supported files: {', '.join(ALLOWED_EXTENSIONS)}")
-    print(f"Handler available: {'Yes' if HANDLER_AVAILABLE else 'No'}")
-    print("=" * 60)
-    print("Web Interface: http://localhost:5000")
-    print("Test endpoint: http://localhost:5000/test")
-    print("API Endpoints:")
-    print("   • POST /api/process  - Returns plain text only")
-    print("   • POST /api/upload   - Returns JSON with metadata")
-    print("=" * 60)
-    
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    try:
+        print("=" * 60)
+        print("Email Processor Web Application with Pipeline Integration")
+        print("=" * 60)
+        print(f"Processor available: {'✓ Yes' if PROCESSOR_AVAILABLE else '✗ No'}")
+        print("Web Interface: http://localhost:5000")
+        print("Performance Stats: http://localhost:5000/stats")
+        print()
+        print("API Endpoints:")
+        print("   • POST /api/process          - Returns plain text")
+        print("   • POST /api/process_detailed - Returns JSON with metadata")
+        print()
+        print("Pipeline Integration Endpoints:")
+        print("   • GET  /api/get_latest       - Get latest processed text")
+        print("   • GET  /api/get_queue        - Get all recent processed texts")
+        print("   • POST /api/clear_queue      - Clear the processing queue")
+        print()
+        print("Your pipeline can now:")
+        print("   ✓ Get cleaned text automatically after processing")
+        print("   ✓ Access recent processing history")
+        print("   ✓ Send text directly for processing via API")
+        print("=" * 60)
+        
+        # Start the web server
+        app.run(debug=True, host='0.0.0.0', port=5000)
+        
+    except KeyboardInterrupt:
+        print("\nShutting down gracefully...")
+    except Exception as e:
+        print(f"Failed to start Flask application: {e}")
+        print("Make sure no other application is using port 5000")
+    finally:
+        print("Application stopped.")

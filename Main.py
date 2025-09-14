@@ -1,37 +1,52 @@
-#!/usr/bin/env python3
-"""
-main.py - Clean interface that returns ONLY plain text
-This is what Flask will call in the backend
-"""
+from datacleaning import datacleaning
+import requests
+import subprocess
 
-import os
-import sys
-from email_input_handler import EmailInputHandler
+def main():
+    subprocess.Popen(['python', 'app.py'])#run app.py in background
+    process_user_input()
 
+    return
 
-def main(file_path):#for YQ if you need to get your data, call it from here it will return the data
-    """
-    Main function that returns ONLY clean plain text.
-    No print statements, no debug info, just the processed text.
-    
-    Args:
-        file_path (str): Path to the email file
-        
-    Returns:
-        str: Clean plain text or empty string if error
-    """
+def get_data_from_flask():
     try:
-        # Verify file exists
-        if not os.path.exists(file_path):
-            return ""
-        
-        # Process the file silently
-        handler = EmailInputHandler()
-        result = handler.process_input(file_path=file_path, debug=False)
-        
-        # Return only the clean text (no extra messages)
-        return result if result else ""
-        
-    except Exception:
-        # Silent error handling - return empty string
+        response = requests.get('http://localhost:5000/api/get_latest')
+        if response.status_code == 200:
+            result = response.json()
+            if result['success']:
+                return result['text']
         return ""
+    except:
+        return ""
+    
+def process_user_input():
+    while True:
+        cleaned_data = get_data_from_flask()
+        if cleaned_data:
+            # Process the input
+            clean = datacleaning()
+            cleaned_text, emails, domains, urls, ml_text = clean.cleantext(cleaned_data)
+            print(cleaned_text, emails, domains, urls, ml_text)
+            # Temporary risk score (replace with actual ML model and kessler's output via functions)
+            risk_score = 0.75  # example score
+            
+            # Prepare response data
+            response_data = {
+                'risk_score': risk_score,
+                'cleaned_text': cleaned_text,
+                'emails': emails,
+                'domains': domains,
+                'urls': urls
+            }
+            
+            # Send results back to Flask
+            try:
+                requests.post('http://localhost:5000/api/update_results', 
+                            json=response_data)
+            except Exception as e:
+                print(f"Error sending results: {e}")
+                
+            return response_data
+
+if __name__ == "__main__":
+    main()
