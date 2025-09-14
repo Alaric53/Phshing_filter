@@ -13,6 +13,7 @@ stemmer = PorterStemmer()
 class datacleaning:
     email_pattern = r'[\w\.-]+@[\w\.-]+'
     url_pattern = r'(https?://[^\s?]+|www\.[^\s?]+)'
+    ip_pattern = ipv4_pattern_with_params = r'\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(?:[^\s.]*)'
     nltk.download('stopwords')
     stop_words = set(stopwords.words('english'))
     def __init__(self):
@@ -24,15 +25,19 @@ class datacleaning:
         emails = list(set([email.removesuffix('.') for email in emails]))
         urls = re.findall(self.url_pattern,body)
         urls = list(set([url.removesuffix('.') for url in urls]))
+        ips = re.findall(self.ip_pattern, body)
+        ips = list(set(ips))
 
         domains = "\n".join([email.split('@')[-1] for email in emails])
         emails = "\n".join(emails)
         urls = "\n".join(urls)
+        ips = "\n".join(ips)
 
         # Remove emails and urls from data
         cleaned_text = body
         cleaned_text = re.sub(self.email_pattern, '', body)
         cleaned_text = re.sub(self.url_pattern, '', body)
+        cleaned_text = re.sub(self.ip_pattern, '', body)
 
         #removed punctuations
         cleaned_text = re.sub(r'[^\w\s]', '', cleaned_text) 
@@ -46,7 +51,7 @@ class datacleaning:
         words = [stemmer.stem(w) for w in words]
         cleaned_text = " ".join(words)
 
-        return cleaned_text, emails, domains, urls
+        return cleaned_text, emails, domains, urls, ips
 
 
     def cleanfile(self,file):
@@ -75,10 +80,10 @@ class datacleaning:
                     
 
 
-                    cleaned_text, emails, domains, urls = self.cleantext(body)
+                    cleaned_text, emails, domains, urls, ips = self.cleantext(body)
                     
 
-                    rows.append({"label": label, "body": cleaned_text, "emails": emails, "domains": domains, "urls": urls})
+                    rows.append({"label": label, "body": cleaned_text, "emails": emails, "domains": domains, "urls": urls, "ips": ips})
 
                     
                     
@@ -87,7 +92,7 @@ class datacleaning:
         # Save as CSV
         output_path = output_dir + "/cleaned_" + file_name + ".csv"
         with open(output_path, "w", newline="", encoding="utf-8") as csvfile:
-            writer = csv.DictWriter(csvfile, fieldnames=["label", "body","emails","domains","urls"])
+            writer = csv.DictWriter(csvfile, fieldnames=["label", "body","emails","domains","urls","ips"])
             writer.writeheader()
             writer.writerows(rows)
 
