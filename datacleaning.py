@@ -3,14 +3,7 @@ import nltk #pip install nltk
 from nltk.corpus import stopwords
 from nltk.stem import PorterStemmer
 
-import pandas as pd #pip install pandas
-from sklearn.feature_extraction.text import TfidfVectorizer #pip install sklearn
-
 import csv
-import joblib
-from scipy.sparse import save_npz
-from scipy.sparse import load_npz
-
 import os
 
 
@@ -19,7 +12,7 @@ stemmer = PorterStemmer()
 
 class datacleaning:
     email_pattern = r'[\w\.-]+@[\w\.-]+'
-    url_pattern = r'(https?://[^\s]+|www\.[^\s]+)'
+    url_pattern = r'(https?://[^\s?]+|www\.[^\s?]+)'
     nltk.download('stopwords')
     stop_words = set(stopwords.words('english'))
     def __init__(self):
@@ -47,21 +40,19 @@ class datacleaning:
         #remove stop words
         words = cleaned_text.split()
         words = [w for w in words if w not in self.stop_words]
-        cleaned_text = " ".join(words)
+        
 
         #stemming words into base words,
         words = [stemmer.stem(w) for w in words]
-        ml_text = " ".join(words)
+        cleaned_text = " ".join(words)
 
-        return cleaned_text, emails, domains, urls, ml_text
+        return cleaned_text, emails, domains, urls
 
 
     def cleanfile(self,file):
         rows = []
 
         # Lists to store cleaned text and labels for vectorization
-        ml_text_list = []
-        labels_list = []
 
         file_name = file.replace(".txt", "")
         output_dir = "cleaned_data"
@@ -75,16 +66,22 @@ class datacleaning:
                 parts = line.split("\t", 1)  
                 if len(parts) == 2:
                     label, body = parts
+                    if label == "No":
+                        label = 1
+                    elif label == "Yes":
+                        label = 0
+                    else:
+                         continue
+                    
 
 
-                    cleaned_text, emails, domains, urls, ml_text = self.cleantext(body)
+                    cleaned_text, emails, domains, urls = self.cleantext(body)
                     
 
                     rows.append({"label": label, "body": cleaned_text, "emails": emails, "domains": domains, "urls": urls})
 
                     
-                    ml_text_list.append(ml_text)
-                    labels_list.append(label)
+                    
 
 
         # Save as CSV
@@ -94,27 +91,12 @@ class datacleaning:
             writer.writeheader()
             writer.writerows(rows)
 
-        print("Saved", len(rows), "rows to emails.csv")
+        print("Saved", len(rows), "rows to " + file_name + ".csv")
         
-        vectorizer = TfidfVectorizer()
-        X = vectorizer.fit_transform(ml_text_list)
-        print("Starting TF-IDF vectorization...")
-        vectorizer = TfidfVectorizer()
-        X = vectorizer.fit_transform(ml_text_list)
-        print("Vectorization complete.")
-
-        # Save the vectorizer object in the output directory
-        joblib.dump(vectorizer, os.path.join(output_dir, 'tfidf_vectorizer_' + file_name + '.joblib'))
-
-        # Save the sparse matrix in the output directory
-        save_npz(os.path.join(output_dir, 'tfidf_vectors_' + file_name + '.npz'), X)
-
-        # Save the labels list in the output directory
-        joblib.dump(labels_list, os.path.join(output_dir, 'labels_' + file_name +'.joblib'))
+        
 
         
         
         
-
 
 
