@@ -56,7 +56,7 @@ def combined_score(cleaned_text):
     #call the ruleset score here
     ruleset_score, keyword_count = ruleset.process_email_and_score(cleaned_text)
     # call ml function here to give variable a score
-    ml_score = 0
+    ml_score = 50
     print("ruleset_score:", ruleset_score, "ml_score:", ml_score)
     # combine with 50/50 weightage
     risk_score = round((ruleset_score * 0.5) + (ml_score * 0.5))    
