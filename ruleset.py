@@ -1,4 +1,5 @@
 import re
+from text_processor import get_processor
 
 SAFE_DOMAINS = [
     # Government
@@ -35,7 +36,7 @@ def safe_domain_check(provided_email):
     if domain in SAFE_DOMAINS:                     # return a score of either 0 or 2, with 0 being safe
         return 0    
     else: 
-        return 2                                   
+        return 2                                  
 
 def suspicious_keyword_check(subject,body):        # check the subject and body of email for flagged keywords
     content = subject.lower() + " " + body.lower() # separate subject and body with a 'space'   
@@ -88,20 +89,33 @@ def suspicious_url_detection(body):
     
     return score, suspicious_urls
 
-def ruleset(email):     #TBD if we using dict
-    score = 0
-    sender_domain = email["from"].split("@")[-1]
 
-    score += safe_domain_check(email["from"])
-    score += suspicious_keyword_check(email["subject"], email["body"])
-    score += keyword_position_scoring(email["subject"], email["body"])
-    score += lookalike_domain_check(sender_domain)
+def calculator(sender: str, subject: str, body: str) -> tuple: #Main ruleset score calculator returns ruleset score, keyword_count
+    sender_domain = sender.split("@")[-1]                      #calculations done with ruleset
+    domain_score = safe_domain_check(sender)
+    keyword_count = suspicious_keyword_check(subject, body)
+    keyword_score = min(15, keyword_count)
+    position_score = min(15, keyword_position_scoring(subject, body))
+    lookalike_score = lookalike_domain_check(sender_domain)
+    url_score, suspicious_urls = suspicious_url_detection(body)
+    url_score = min(15, url_score)
 
-    url_score, suspicious_urls = suspicious_url_detection(email["body"])
-    score += url_score
+    total_score = domain_score + keyword_score + position_score + lookalike_score + url_score
+    max_score = 50                                                                               #Max score set to 50 for now          
+    ruleset_score = round((total_score / max_score) * 100, 2)                                    #calculates percentage upon 100%   
 
-    return score, suspicious_urls
+    return ruleset_score, keyword_count
 
+
+def process_email_and_score(email: str):   #Returns tuple (danger_level, percentage_score, keyword_count)
+    proc = get_processor()
+    parsed_email = proc._parse_email_text_with_headers(email)
+    # Extract sender subject and body
+    sender = parsed_email["from"]
+    subject = parsed_email["subject"]
+    body = parsed_email["body"]
+
+    return calculator(sender, subject, body)
 
 
 
