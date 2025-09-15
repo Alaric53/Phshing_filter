@@ -1,6 +1,7 @@
 from datacleaning import datacleaning
 import requests
 import subprocess
+import ruleset
 
 def main():
     subprocess.Popen(['python', 'app.py'])#run app.py in background
@@ -28,11 +29,13 @@ def process_user_input():
             cleaned_text, emails, domains, urls, ml_text = clean.cleantext(cleaned_data)
             print(cleaned_text, emails, domains, urls, ml_text)
             # Temporary risk score (replace with actual ML model and kessler's output via functions)
-            risk_score = 0.75  # example score
+            risk_score, risk_level, keyword_count = combined_score(cleaned_data)  # example score
             
             # Prepare response data
             response_data = {
                 'risk_score': risk_score,
+                'risk_level':risk_level,
+                'sus_keywords':keyword_count,
                 'cleaned_text': cleaned_text,
                 'emails': emails,
                 'domains': domains,
@@ -47,6 +50,29 @@ def process_user_input():
                 print(f"Error sending results: {e}")
                 
             return response_data
+
+#import ml scorer here
+def combined_score(cleaned_text):
+    #call the ruleset score here
+    ruleset_score, keyword_count = ruleset.process_email_and_score(cleaned_text)
+    # call ml function here to give variable a score
+    ml_score = 0
+    print("ruleset_score:", ruleset_score, "ml_score:", ml_score)
+    # combine with 50/50 weightage
+    risk_score = round((ruleset_score * 0.5) + (ml_score * 0.5))    
+    
+    # Decide danger level
+    if risk_score == 0:
+        risk_level ="SAFE"
+    elif risk_score <= 33:
+        risk_level = "Low danger"
+    elif risk_score <= 66:
+        risk_level = "Medium danger"
+    else:
+        risk_level = "High danger"
+    
+    return risk_score, risk_level, keyword_count
+
 
 if __name__ == "__main__":
     main()
