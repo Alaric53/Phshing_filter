@@ -7,7 +7,7 @@ vectorizer = TfidfVectorizer()
 model = MultinomialNB()
 
 #Initialise Dataframe
-df = pd.read_csv('Phishing Filters\cleaned_testingdata.csv')
+df = pd.read_csv('./cleaned_data/cleaned_testingdata.csv')
 
 target = df.label
 df.domains = df.domains.fillna('')
@@ -44,3 +44,4 @@ probability = model.predict_proba(new_input_tfidf)
 for text, label, prob in zip(new_input_tfidf, prediction, probability):
     print(f"Text: {text}\nPredicted Label: {label}, Probabilities: {prob}\n")
 """
+
