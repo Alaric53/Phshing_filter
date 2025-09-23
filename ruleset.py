@@ -1,5 +1,11 @@
 import re
 from text_processor import get_processor
+from nltk.stem import PorterStemmer
+
+stemmer = PorterStemmer()
+
+BLACKLIST = ["blacklist1", "blacklist2"]
+STEMMED_BLACKLIST = [stemmer.stem(word) for word in BLACKLIST]
 
 SAFE_DOMAINS = [
     # Government
@@ -116,6 +122,7 @@ def process_email_and_score(email: str):   #Returns tuple (danger_level, percent
     body = parsed_email["body"]
 
     return calculator(sender, subject, body)
+
 
 
 
