@@ -7,6 +7,7 @@ vectorizer = TfidfVectorizer()
 model = MultinomialNB()
 
 #Initialise Dataframe
+
 df = pd.read_csv('cleaned_data/cleaned_testingdata.csv')
 
 target = df.label
@@ -27,21 +28,20 @@ xtest_tfidf = vectorizer.transform(X_test)
 accuracy = model.score(xtest_tfidf, Y_test)
 print(accuracy)
 
-
-
-"""
+def analyse(cleaned_text, domains):
 # Use case
-new_input = []
+    new_input = [x + y for x, y in zip(cleaned_text, domains)]
+    
+    # Vectorize the new input
+    new_input_tfidf = vectorizer.transform(new_input)
+    
+    # Make predictions
+    prediction = model.predict(new_input_tfidf)
+    probability = model.predict_proba(new_input_tfidf)
+    
+    # Display predictions and their probabilities
+    for text, label, prob in zip(new_input_tfidf, prediction, probability):
+        print(f"Text: {text}\nPredicted Label: {label}, Probabilities: {prob}\n")
 
-# Vectorize the new input
-new_input_tfidf = vectorizer.transform(new_input)
 
-# Make predictions
-prediction = model.predict(new_input_tfidf)
-probability = model.predict_proba(new_input_tfidf)
-
-# Display predictions and their probabilities
-for text, label, prob in zip(new_input_tfidf, prediction, probability):
-    print(f"Text: {text}\nPredicted Label: {label}, Probabilities: {prob}\n")
-"""
 
