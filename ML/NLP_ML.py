@@ -7,7 +7,7 @@ vectorizer = TfidfVectorizer()
 model = MultinomialNB()
 
 #Initialise Dataframe
-df = pd.read_csv('./cleaned_data/cleaned_testingdata.csv')
+df = pd.read_csv('cleaned_data/cleaned_testingdata.csv')
 
 target = df.label
 df.domains = df.domains.fillna('')
