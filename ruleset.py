@@ -4,9 +4,6 @@ from nltk.stem import PorterStemmer
 
 stemmer = PorterStemmer()
 
-BLACKLIST = ["blacklist1", "blacklist2"]
-STEMMED_BLACKLIST = [stemmer.stem(word) for word in BLACKLIST]
-
 SAFE_DOMAINS = [
     # Government
     "gov.sg", "moh.gov.sg", "cpf.gov.sg", "singpass.gov.sg",
@@ -35,6 +32,9 @@ SUSPICIOUS_KEYWORDS = [
     "finance", "maintenance", "customer", "invoice", "billing", "subscription", "order",
     "shipment", "purchase", "billinginfo", "receipt", "accountinfo", "profile",
 ]
+
+SUSPICIOUS_KEYWORDS = [stemmer.stem(word) for word in SUSPICIOUS_KEYWORDS]
+print(SUSPICIOUS_KEYWORDS)
 
 
 def safe_domain_check(provided_email):
