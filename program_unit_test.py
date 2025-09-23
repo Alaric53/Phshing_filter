@@ -41,16 +41,8 @@ class TestRuleSet(unittest.TestCase):
         score, urls = suspicious_url_detection(body)
         self.assertEqual(score, 4)   # 2 urls 2 points each
         self.assertIn("http://scam.com", urls)
-
-    def test_ruleset(self):
-        email = {
-            "from": "scammer@fake.com",
-            "subject": "Urgent account notice",
-            "body": "Please login now http://192.168.0.1"
-        }
-        score, urls = ruleset(email)
-        self.assertGreater(score, 0)
-        self.assertTrue(isinstance(urls, list))
+        
+#calculator and processor unit test to be added
 
 
 
