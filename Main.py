@@ -26,8 +26,8 @@ def process_user_input():
         if cleaned_data:
             # Process the input
             clean = datacleaning()
-            cleaned_text, emails, domains, urls, ml_text = clean.cleantext(cleaned_data)
-            print(cleaned_text, emails, domains, urls, ml_text)
+            cleaned_text, emails, domains, urls, ips = clean.cleantext(cleaned_data)
+            print(cleaned_text, emails, domains, urls, ips)
             # Temporary risk score (replace with actual ML model and kessler's output via functions)
             risk_score, risk_level, keyword_count = combined_score(cleaned_data)  # example score
             
