@@ -45,6 +45,7 @@ def analyse(cleaned_text, domains):
         print(f"Text: {text}\nPredicted Label: {label}, Probabilities: {prob}\n")
     '''
 
-    return probability
+    return probability[0][1]
+
 
 
