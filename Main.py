@@ -29,7 +29,7 @@ def process_user_input():
             cleaned_text, emails, domains, urls, ips = clean.cleantext(cleaned_data)
             print(cleaned_text, emails, domains, urls, ips)
             #ML analysis
-            Probability = analise(cleaned_text, emails, domains, urls, ips)
+            Probability = analyse(cleaned_text, domains)
             # Temporary risk score (replace with actual ML model and kessler's output via functions)
             risk_score, risk_level, keyword_count = combined_score(cleaned_data)  # example score
             
