@@ -11,8 +11,11 @@ stemmer = PorterStemmer()
 
 
 class datacleaning:
-    email_pattern = r'[\w\.-]+@[\w\.-]+'
+    #ensure there are characters before and after @. 
+    email_pattern = r'[\w\.-]+@[\w\.-]+\.[a-zA-Z]{2,}'
+    #matches http and https 
     url_pattern = r'(https?://[^\s?]+|www\.[^\s?]+)'
+    #ensure ip address values are valid which is less than 255
     ip_pattern = ipv4_pattern_with_params = r'\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(?:[^\s.]*)'
     nltk.download('stopwords')
     stop_words = set(stopwords.words('english'))
@@ -22,23 +25,20 @@ class datacleaning:
     def cleantext(self,body):
         #Extracting and storing email, domain and url data
         emails = re.findall(self.email_pattern, body)
+        #set make sure that my list values are unique
         emails = list(set([email.removesuffix('.') for email in emails]))
         urls = re.findall(self.url_pattern,body)
         urls = list(set([url.removesuffix('.') for url in urls]))
         ips = re.findall(self.ip_pattern, body)
         ips = list(set(ips))
-
-        domains = "\n".join([email.split('@')[-1] for email in emails])
-        emails = "\n".join(emails)
-        urls = "\n".join(urls)
-        ips = "\n".join(ips)
+        domains = [email.split('@')[-1] for email in emails]
+        
 
         # Remove emails and urls from data
         cleaned_text = body
-        cleaned_text = re.sub(self.email_pattern, '', body)
-        cleaned_text = re.sub(self.url_pattern, '', body)
-        cleaned_text = re.sub(self.ip_pattern, '', body)
-
+        cleaned_text = re.sub(self.email_pattern, '', cleaned_text)
+        cleaned_text = re.sub(self.url_pattern, '', cleaned_text)
+        cleaned_text = re.sub(self.ip_pattern, '', cleaned_text)
         #removed punctuations
         cleaned_text = re.sub(r'[^\w\s]', '', cleaned_text) 
 
@@ -57,35 +57,42 @@ class datacleaning:
     def cleanfile(self,file):
         rows = []
 
-        # Lists to store cleaned text and labels for vectorization
-
         file_name = file.replace(".txt", "")
         output_dir = "cleaned_data"
-        with open("test data/"+file, "r", encoding="utf-8") as f:
-            
-            for line in f:
-                line = line.strip()
-                if not line:
-                    continue
-                # split only at the first tab (or whitespace if that's the case)
-                parts = line.split("\t", 1)  
-                if len(parts) == 2:
-                    label, body = parts
-                    if label == "No":
-                        label = 1
-                    elif label == "Yes":
-                        label = 0
-                    else:
-                         continue
-                    
+        try:
+            with open("test data/"+file, "r", encoding="utf-8") as f:
+                
+                for line in f:
+                    line = line.strip()
+                    #if line is empty, skip line
+                    if not line:
+                        continue
+                    # split only at the first tab (or whitespace if that's the case)
+                    parts = line.split("\t", 1)  
+                    if len(parts) == 2:
+                        label, body = parts
+                        if label == "No":
+                            label = 1
+                        elif label == "Yes":
+                            label = 0
+                        else:
+                            #if label is not "yes" or "no" skips line
+                            continue
+                        
 
 
-                    cleaned_text, emails, domains, urls, ips = self.cleantext(body)
-                    
+                        cleaned_text, emails, domains, urls, ips = self.cleantext(body)
+                        emails = "\n".join(emails)
+                        domains = "\n".join(domains)
+                        urls = "\n".join(urls)
+                        ips = "\n".join(ips)
 
-                    rows.append({"label": label, "body": cleaned_text, "emails": emails, "domains": domains, "urls": urls, "ips": ips})
+                        rows.append({"label": label, "body": cleaned_text, "emails": emails, "domains": domains, "urls": urls, "ips": ips})
 
-                    
+        except:
+            output = "File does not exist"
+            print(output)
+            return output
                     
 
 
