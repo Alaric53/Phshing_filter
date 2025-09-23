@@ -11,8 +11,11 @@ model = MultinomialNB()
 df = pd.read_csv('cleaned_data/cleaned_testingdata.csv')
 
 target = df.label
+df.emails = df.emails.fillna('')
 df.domains = df.domains.fillna('')
-inputs = df.domains + df.body
+df.urls = df.urls.fillna('')
+df.ips = df.ips.fillna('')
+inputs = df.domains + df.body + df.emails + df.urls + df.ips
 
 #Split Training(70%) and Testing(30%) Data
 X_train, X_test, Y_train, Y_test = train_test_split(inputs,target,test_size=0.3,random_state=1122)
@@ -28,9 +31,9 @@ xtest_tfidf = vectorizer.transform(X_test)
 accuracy = model.score(xtest_tfidf, Y_test)
 print(accuracy)
 
-def analyse(cleaned_text, domains):
-# Use case
-    new_input = [x + y for x, y in zip(cleaned_text, domains)]
+def analyse(cleaned_text, emails, domains, urls, ips):
+    # Use case
+    new_input = [x + y for x, y in zip(cleaned_text, emails, domains, urls, ips)]
     
     # Vectorize the new input
     new_input_tfidf = vectorizer.transform(new_input)
@@ -45,6 +48,8 @@ def analyse(cleaned_text, domains):
         print(f"Text: {text}\nPredicted Label: {label}, Probabilities: {prob}\n")
     '''
 
-    return probability
+    return probability[0][1]
+
+
 
 
