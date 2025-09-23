@@ -39,9 +39,12 @@ def analyse(cleaned_text, domains):
     prediction = model.predict(new_input_tfidf)
     probability = model.predict_proba(new_input_tfidf)
     
+    '''
     # Display predictions and their probabilities
     for text, label, prob in zip(new_input_tfidf, prediction, probability):
         print(f"Text: {text}\nPredicted Label: {label}, Probabilities: {prob}\n")
+    '''
 
+    return probability
 
 
