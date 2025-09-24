@@ -80,6 +80,8 @@ def levenshtein_distance(a,b):                    # genuinely just copy pasted t
 
 
 def lookalike_domain_check(domain):             # checker using levenshtein alg
+    if domain in SAFE_DOMAINS:                  # exact match = safe
+        return 0
     for safe in SAFE_DOMAINS:
         distance = levenshtein_distance(domain, safe)
         if distance <= 2:   # small difference means it is suspicious
@@ -96,14 +98,14 @@ def suspicious_url_detection(body):
     return score, suspicious_urls
 
 
-def calculator(sender: str, subject: str, body: str) -> tuple: #Main ruleset score calculator returns ruleset score, keyword_count
-    sender_domain = sender.split("@")[-1]                      #calculations done with ruleset
+def calculator(sender: str, subject: str, body: str, urlIP: str) -> tuple:  #Main ruleset score calculator returns ruleset score, keyword_count
+    sender_domain = sender.split("@")[-1]                                   #calculations done with ruleset
     domain_score = safe_domain_check(sender)
     keyword_count = suspicious_keyword_check(subject, body)
     keyword_score = min(15, keyword_count)
     position_score = min(15, keyword_position_scoring(subject, body))
     lookalike_score = lookalike_domain_check(sender_domain)
-    url_score, suspicious_urls = suspicious_url_detection(body)
+    url_score, suspicious_urls = suspicious_url_detection(urlIP)
     url_score = min(15, url_score)
 
     total_score = domain_score + keyword_score + position_score + lookalike_score + url_score
@@ -113,17 +115,14 @@ def calculator(sender: str, subject: str, body: str) -> tuple: #Main ruleset sco
     return ruleset_score, keyword_count
 
 
-def process_email_and_score(email: str):   #Returns tuple (danger_level, percentage_score, keyword_count)
-    proc = get_processor()
-    parsed_email = proc._parse_email_text_with_headers(email)
-    # Extract sender subject and body
-    sender = parsed_email["from"]
-    subject = parsed_email["subject"]
-    body = parsed_email["body"]
+def process_email_and_score(cleaned_text, emails, domains, urls, ips):   #Returns tuple (danger_level, percentage_score, keyword_count)
+    sender = " ".join(emails + domains) if emails or domains else ""
+    subject = cleaned_text
+    body = cleaned_text
+    # convert list of urls + ips into one string
+    urlIP = " ".join((urls or []) + (ips or []))
 
-    return calculator(sender, subject, body)
-
-
+    return calculator(sender, subject, body, urlIP)
 
 
 
