@@ -31,8 +31,8 @@ def process_user_input():
             print(cleaned_text, emails, domains, urls, ips)
             #ML analysis
             probability = analyse(cleaned_text, emails, domains, urls, ips)
-            # Temporary risk score (replace with actual ML model and kessler's output via functions)
-            risk_score, risk_level, keyword_count = combined_score(cleaned_data)  # example score
+            # Temporary risk score (bug fixing some parts still)
+            risk_score, risk_level, keyword_count = combined_score(cleaned_text, emails, domains, urls, ips) #takes the output from datacleaning to scorer
             
             # Prepare response data
             response_data = {
@@ -54,16 +54,17 @@ def process_user_input():
                 
             return response_data
 
-#import ml scorer here
-def combined_score(cleaned_text):
+#put the probability variable into the combined score
+def combined_score(cleaned_text, emails, domains, urls, ips):
     #call the ruleset score here
-    ruleset_score, keyword_count = ruleset.process_email_and_score(cleaned_text)
-    # call ml function here to give variable a score
-    ml_score = 50
+    ruleset_score, keyword_count = ruleset.process_email_and_score(cleaned_text, emails, domains, urls, ips)
+    # call ml function here to give variable a score for now is 0
+    #ml_score = probability
+    ml_score = 0
     print("ruleset_score:", ruleset_score, "ml_score:", ml_score)
     # combine with 50/50 weightage
     risk_score = round((ruleset_score * 0.5) + (ml_score * 0.5))    
-    
+    print(f"risk score: {risk_score}")
     # Decide danger level
     if risk_score == 0:
         risk_level ="SAFE"
