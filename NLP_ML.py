@@ -33,7 +33,7 @@ print(accuracy)
 
 def analyse(cleaned_text, emails, domains, urls, ips):
     # Use case
-    new_input = [x + y for x, y in zip(cleaned_text, emails, domains, urls, ips)]
+    new_input = [ct + em + dom + url + ip for ct, em, dom, url, ip in zip(cleaned_text, emails, domains, urls, ips)]
     
     # Vectorize the new input
     new_input_tfidf = vectorizer.transform(new_input)
@@ -49,3 +49,4 @@ def analyse(cleaned_text, emails, domains, urls, ips):
     '''
 
     return probability[0][1]
+
