@@ -32,7 +32,12 @@ accuracy = model.score(xtest_tfidf, Y_test)
 print(accuracy)
 
 def analyse(cleaned_text, emails, domains, urls, ips):
-    # Use case
+    # Ensure none of the input lists are empty
+    cleaned_text = cleaned_text if cleaned_text else [""]
+    emails = emails if emails else [""]
+    domains = domains if domains else [""]
+    urls = urls if urls else [""]
+    ips = ips if ips else [""]
     new_input = [ct + em + dom + url + ip for ct, em, dom, url, ip in zip(cleaned_text, emails, domains, urls, ips)]
     
     # Vectorize the new input
@@ -49,4 +54,5 @@ def analyse(cleaned_text, emails, domains, urls, ips):
     '''
 
     return probability[0][1]
+
 
