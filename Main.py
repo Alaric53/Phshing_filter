@@ -1,4 +1,5 @@
 from datacleaning import datacleaning
+from NLP_ML import analyse
 import requests
 import subprocess
 import ruleset
