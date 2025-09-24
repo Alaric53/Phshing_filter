@@ -49,7 +49,3 @@ def analyse(cleaned_text, emails, domains, urls, ips):
     '''
 
     return probability[0][1]
-
-
-
-
