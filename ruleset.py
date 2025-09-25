@@ -4,34 +4,24 @@ from nltk.stem import PorterStemmer
 
 stemmer = PorterStemmer()
 
-SAFE_DOMAINS = [
-    # Government
-    "gov.sg", "moh.gov.sg", "cpf.gov.sg", "singpass.gov.sg",
-    # Banks
-    "dbs.com.sg", "ocbc.com", "uobgroup.com", "hsbc.com.sg", "standardchartered.com.sg",
-    # Universities
-    "sit.edu.sg", "ntu.edu.sg", "nus.edu.sg", "smu.edu.sg", "suss.edu.sg",
-    # Healthcare
-    "singhealth.com.sg", "kkh.com.sg", "nhg.com.sg", "ttsh.com.sg", "nuhs.edu.sg", "nccs.com.sg", "sgmc.com.sg",
-    "changi.sghealth.org", "cgh.com.sg", "sgh.com.sg", 
-    # Major online shopping sites
-    "amazon.com", "amazon.sg", "shopee.sg", "lazada.sg", "qoo10.sg",
-    "aliexpress.com", "ebay.com", "taobao.com",
-    # International brands
-    "microsoft.com", "google.com",  "apple.com", "paypal.com",
-]
+def load_keywords(filepath="suspicious_keywords.txt"):
+    with open(filepath, "r", encoding="utf-8") as f:
+        words = [line.strip().lower() for line in f if line.strip()]
+    return [stemmer.stem(word) for word in words]
 
-SUSPICIOUS_KEYWORDS = [
-    "access", "accounts", "auth", "security", "portal", "user", "company", "admin",
-    "credential", "identity", "login", "password", "privilege", "token", "validation",
-    "assurance", "availability", "confidentiality", "integrity", "privacy", "safety",
-    "trust", "verification", "check", "key", "lock", "biometrics", "authorize",
-    "authentication", "session", "profile", "service", "support", "notify", "email",
-    "account", "update", "secure", "notification", "transaction", "validate",
-    "confirmation", "manager", "assistant", "dashboard", "information", "communication",
-    "finance", "maintenance", "customer", "invoice", "billing", "subscription", "order",
-    "shipment", "purchase", "billinginfo", "receipt", "accountinfo", "profile",
-]
+def load_safe_domains(filepath="top-1m.csv", limit=1000):
+    safe_domains = set()
+    with open(filepath, "r", encoding="utf-8") as f:
+        for i, line in enumerate(f):
+            rank, domain = line.strip().split(",")
+            safe_domains.add(domain.lower())
+            if i >= limit:  
+                break
+    return safe_domains
+
+# Load them once at startup
+SUSPICIOUS_KEYWORDS = load_keywords()
+SAFE_DOMAINS = load_safe_domains()
 
 SUSPICIOUS_KEYWORDS = [stemmer.stem(word) for word in SUSPICIOUS_KEYWORDS]
 print(SUSPICIOUS_KEYWORDS)
@@ -63,7 +53,7 @@ def keyword_position_scoring(subject,body):
             score += 2                            # flagged keywords in subject are more serious
     return score 
 
-def levenshtein_distance(a,b):                    # genuinely just copy pasted this
+def levenshtein_distance(a,b):                   
     dp = [[0] * (len(b)+1) for _ in range(len(a)+1)]
     for i in range(len(a)+1):
         for j in range(len(b)+1):
@@ -123,7 +113,6 @@ def process_email_and_score(cleaned_text, emails, domains, urls, ips):   #Return
     urlIP = " ".join((urls or []) + (ips or []))
 
     return calculator(sender, subject, body, urlIP)
-
 
 
 
