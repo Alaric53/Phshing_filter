@@ -1,8 +1,9 @@
 from datacleaning import datacleaning
-from NLP_ML import analyse
 import requests
 import subprocess
 import ruleset
+import NLP_ML
+print(NLP_ML.__file__)
 
 def main():
     subprocess.Popen(['python', 'app.py'])#run app.py in background
@@ -29,38 +30,21 @@ def process_user_input():
             clean = datacleaning()
             cleaned_text, emails, domains, urls, ips = clean.cleantext(cleaned_data)
             print(cleaned_text, emails, domains, urls, ips)
-            #ML analysis
-            probability = analyse(cleaned_text, emails, domains, urls, ips)
-            # Temporary risk score (bug fixing some parts still)
-            risk_score, risk_level, keyword_count = combined_score(cleaned_text, emails, domains, urls, ips) #takes the output from datacleaning to scorer
-            
-            # Prepare response data
-            response_data = {
-                'risk_score': risk_score,
-                'risk_level':risk_level,
-                'sus_keywords':keyword_count,
-                'cleaned_text': cleaned_text,
-                'emails': emails,
-                'domains': domains,
-                'urls': urls
-            }
-            
-            # Send results back to Flask
-            try:
-                requests.post('http://localhost:5000/api/update_results', 
-                            json=response_data)
-            except Exception as e:
-                print(f"Error sending results: {e}")
-                
-            return response_data
+            #ML analysis        
+            probability = NLP_ML.analyse(cleaned_text, emails, domains, urls, ips)
+            #ruleset score
+            ruleset_score, keyword_count = ruleset.process_email_and_score(cleaned_text, emails, domains, urls, ips)
+
+            return ruleset_score, probability, keyword_count, cleaned_text, emails, domains, urls
 
 #put the probability variable into the combined score
-def combined_score(cleaned_text, emails, domains, urls, ips):
-    #call the ruleset score here
-    ruleset_score, keyword_count = ruleset.process_email_and_score(cleaned_text, emails, domains, urls, ips)
+def combined_score(ruleset_score, probability, keyword_count, cleaned_text, emails, domains, urls):
+
+    #run user input
+    ruleset_score, probability, keyword_count, cleaned_text, emails, domains, urls = process_user_input()
+
     # call ml function here to give variable a score for now is 0
-    #ml_score = probability
-    ml_score = 0
+    ml_score = probability * 100
     print("ruleset_score:", ruleset_score, "ml_score:", ml_score)
     # combine with 50/50 weightage
     risk_score = round((ruleset_score * 0.5) + (ml_score * 0.5))    
@@ -74,8 +58,26 @@ def combined_score(cleaned_text, emails, domains, urls, ips):
         risk_level = "Medium danger"
     else:
         risk_level = "High danger"
-    
-    return risk_score, risk_level, keyword_count
+
+    # Prepare response data
+    response_data = {
+        'risk_score': risk_score,
+        'risk_level':risk_level,
+        'sus_keywords':keyword_count,
+        'cleaned_text': cleaned_text,
+        'emails': emails,
+        'domains': domains,
+        'urls': urls
+    }
+
+        # Send results back to Flask
+    try:
+        requests.post('http://localhost:5000/api/update_results', 
+                    json=response_data)
+    except Exception as e:
+        print(f"Error sending results: {e}")
+
+    return response_data
 
 
 if __name__ == "__main__":

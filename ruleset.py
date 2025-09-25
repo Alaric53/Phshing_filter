@@ -4,38 +4,22 @@ from nltk.stem import PorterStemmer
 
 stemmer = PorterStemmer()
 
-SAFE_DOMAINS = [
-    # Government
-    "gov.sg", "moh.gov.sg", "cpf.gov.sg", "singpass.gov.sg",
-    # Banks
-    "dbs.com.sg", "ocbc.com", "uobgroup.com", "hsbc.com.sg", "standardchartered.com.sg",
-    # Universities
-    "sit.edu.sg", "ntu.edu.sg", "nus.edu.sg", "smu.edu.sg", "suss.edu.sg",
-    # Healthcare
-    "singhealth.com.sg", "kkh.com.sg", "nhg.com.sg", "ttsh.com.sg", "nuhs.edu.sg", "nccs.com.sg", "sgmc.com.sg",
-    "changi.sghealth.org", "cgh.com.sg", "sgh.com.sg", 
-    # Major online shopping sites
-    "amazon.com", "amazon.sg", "shopee.sg", "lazada.sg", "qoo10.sg",
-    "aliexpress.com", "ebay.com", "taobao.com",
-    # International brands
-    "microsoft.com", "google.com",  "apple.com", "paypal.com",
-]
+def load_keywords(filepath="suspicious_keywords.txt"):
+    with open(filepath, "r", encoding="utf-8") as f:
+        words = [line.strip().lower() for line in f if line.strip()]
+    return [stemmer.stem(word) for word in words]
 
-SUSPICIOUS_KEYWORDS = [
-    "access", "accounts", "auth", "security", "portal", "user", "company", "admin",
-    "credential", "identity", "login", "password", "privilege", "token", "validation",
-    "assurance", "availability", "confidentiality", "integrity", "privacy", "safety",
-    "trust", "verification", "check", "key", "lock", "biometrics", "authorize",
-    "authentication", "session", "profile", "service", "support", "notify", "email",
-    "account", "update", "secure", "notification", "transaction", "validate",
-    "confirmation", "manager", "assistant", "dashboard", "information", "communication",
-    "finance", "maintenance", "customer", "invoice", "billing", "subscription", "order",
-    "shipment", "purchase", "billinginfo", "receipt", "accountinfo", "profile",
-]
+def load_safe_domains(filepath="safe_domains.csv"):
+    safe_domains = set()
+    with open(filepath, "r", encoding="utf-8") as f:
+        for line in f:
+            rank, domain = line.strip().split(",")
+            safe_domains.add(domain.lower())
+    return safe_domains
 
-SUSPICIOUS_KEYWORDS = [stemmer.stem(word) for word in SUSPICIOUS_KEYWORDS]
-print(SUSPICIOUS_KEYWORDS)
-
+# Load them once at startup
+SUSPICIOUS_KEYWORDS = load_keywords()       
+SAFE_DOMAINS = load_safe_domains("safe_domains.csv")
 
 def safe_domain_check(provided_email):
     domain = provided_email.split("@")[-1].lower()
@@ -80,6 +64,8 @@ def levenshtein_distance(a,b):                    # genuinely just copy pasted t
 
 
 def lookalike_domain_check(domain):             # checker using levenshtein alg
+    if domain in SAFE_DOMAINS:                  # exact match = safe
+        return 0
     for safe in SAFE_DOMAINS:
         distance = levenshtein_distance(domain, safe)
         if distance <= 2:   # small difference means it is suspicious
@@ -96,14 +82,14 @@ def suspicious_url_detection(body):
     return score, suspicious_urls
 
 
-def calculator(sender: str, subject: str, body: str) -> tuple: #Main ruleset score calculator returns ruleset score, keyword_count
-    sender_domain = sender.split("@")[-1]                      #calculations done with ruleset
+def calculator(sender: str, subject: str, body: str, urlIP: str) -> tuple:  #Main ruleset score calculator returns ruleset score, keyword_count
+    sender_domain = sender.split("@")[-1]                                   #calculations done with ruleset
     domain_score = safe_domain_check(sender)
     keyword_count = suspicious_keyword_check(subject, body)
     keyword_score = min(15, keyword_count)
     position_score = min(15, keyword_position_scoring(subject, body))
     lookalike_score = lookalike_domain_check(sender_domain)
-    url_score, suspicious_urls = suspicious_url_detection(body)
+    url_score, suspicious_urls = suspicious_url_detection(urlIP)
     url_score = min(15, url_score)
 
     total_score = domain_score + keyword_score + position_score + lookalike_score + url_score
@@ -113,18 +99,14 @@ def calculator(sender: str, subject: str, body: str) -> tuple: #Main ruleset sco
     return ruleset_score, keyword_count
 
 
-def process_email_and_score(email: str):   #Returns tuple (danger_level, percentage_score, keyword_count)
-    proc = get_processor()
-    parsed_email = proc._parse_email_text_with_headers(email)
-    # Extract sender subject and body
-    sender = parsed_email["from"]
-    subject = parsed_email["subject"]
-    body = parsed_email["body"]
+def process_email_and_score(cleaned_text, emails, domains, urls, ips):   #Returns tuple (danger_level, percentage_score, keyword_count)
+    sender = " ".join(emails + domains) if emails or domains else ""
+    subject = cleaned_text
+    body = cleaned_text
+    # convert list of urls + ips into one string
+    urlIP = " ".join((urls or []) + (ips or []))
 
-    return calculator(sender, subject, body)
-
-
-
+    return calculator(sender, subject, body, urlIP)
 
 
 
