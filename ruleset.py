@@ -9,23 +9,17 @@ def load_keywords(filepath="suspicious_keywords.txt"):
         words = [line.strip().lower() for line in f if line.strip()]
     return [stemmer.stem(word) for word in words]
 
-def load_safe_domains(filepath="top-1m.csv", limit=1000):
+def load_safe_domains(filepath="safe_domains.csv"):
     safe_domains = set()
     with open(filepath, "r", encoding="utf-8") as f:
-        for i, line in enumerate(f):
+        for line in f:
             rank, domain = line.strip().split(",")
             safe_domains.add(domain.lower())
-            if i >= limit:  
-                break
     return safe_domains
 
 # Load them once at startup
-SUSPICIOUS_KEYWORDS = load_keywords()
-SAFE_DOMAINS = load_safe_domains()
-
-SUSPICIOUS_KEYWORDS = [stemmer.stem(word) for word in SUSPICIOUS_KEYWORDS]
-print(SUSPICIOUS_KEYWORDS)
-
+SUSPICIOUS_KEYWORDS = load_keywords()       
+SAFE_DOMAINS = load_safe_domains("safe_domains.csv")
 
 def safe_domain_check(provided_email):
     domain = provided_email.split("@")[-1].lower()
@@ -53,7 +47,7 @@ def keyword_position_scoring(subject,body):
             score += 2                            # flagged keywords in subject are more serious
     return score 
 
-def levenshtein_distance(a,b):                   
+def levenshtein_distance(a,b):                    # genuinely just copy pasted this
     dp = [[0] * (len(b)+1) for _ in range(len(a)+1)]
     for i in range(len(a)+1):
         for j in range(len(b)+1):
