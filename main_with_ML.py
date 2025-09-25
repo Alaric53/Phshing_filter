@@ -3,7 +3,7 @@ import requests
 import subprocess
 import ruleset
 import NLP_ML
-
+print(NLP_ML.__file__)
 
 def main():
     subprocess.Popen(['python', 'app.py'])#run app.py in background
@@ -30,13 +30,12 @@ def process_user_input():
             clean = datacleaning()
             cleaned_text, emails, domains, urls, ips = clean.cleantext(cleaned_data)
             print(cleaned_text, emails, domains, urls, ips)
-            #ML analysis                        
+            #ML analysis        
             probability = NLP_ML.analyse(cleaned_text, emails, domains, urls, ips)
-            combined_score(probability)
+            #ruleset score
+            ruleset_score, keyword_count = ruleset.process_email_and_score(cleaned_text, emails, domains, urls, ips)
+            risk_score, risk_level = combined_score(ruleset_score, probability)
 
-            # Temporary risk score (replace with actual ML model and kessler's output via functions)
-            risk_score, risk_level, keyword_count = combined_score(cleaned_text, emails, domains, urls, ips)  # example score
-            
             # Prepare response data
             response_data = {
                 'risk_score': risk_score,
@@ -55,14 +54,11 @@ def process_user_input():
             except Exception as e:
                 print(f"Error sending results: {e}")
                 
-            return response_data
+            return response_data, risk_score, risk_level, keyword_count
 
 #put the probability variable into the combined score
-def combined_score(cleaned_text, emails, domains, urls, ips, probability):
-    #call the ruleset score here
-    ruleset_score, keyword_count = ruleset.process_email_and_score(cleaned_text, emails, domains, urls, ips)
+def combined_score(ruleset_score, probability):
     # call ml function here to give variable a score for now is 0
-    #ml_score = probability
     ml_score = probability * 100
     print("ruleset_score:", ruleset_score, "ml_score:", ml_score)
     # combine with 50/50 weightage
@@ -78,7 +74,7 @@ def combined_score(cleaned_text, emails, domains, urls, ips, probability):
     else:
         risk_level = "High danger"
     
-    return risk_score, risk_level, keyword_count
+    return risk_score, risk_level
 
 
 if __name__ == "__main__":
