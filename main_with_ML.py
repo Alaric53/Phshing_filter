@@ -34,30 +34,15 @@ def process_user_input():
             probability = NLP_ML.analyse(cleaned_text, emails, domains, urls, ips)
             #ruleset score
             ruleset_score, keyword_count = ruleset.process_email_and_score(cleaned_text, emails, domains, urls, ips)
-            risk_score, risk_level = combined_score(ruleset_score, probability)
 
-            # Prepare response data
-            response_data = {
-                'risk_score': risk_score,
-                'risk_level':risk_level,
-                'sus_keywords':keyword_count,
-                'cleaned_text': cleaned_text,
-                'emails': emails,
-                'domains': domains,
-                'urls': urls
-            }
-            
-            # Send results back to Flask
-            try:
-                requests.post('http://localhost:5000/api/update_results', 
-                            json=response_data)
-            except Exception as e:
-                print(f"Error sending results: {e}")
-                
-            return response_data, risk_score, risk_level, keyword_count
+            return ruleset_score, probability, keyword_count, cleaned_text, emails, domains, urls
 
 #put the probability variable into the combined score
-def combined_score(ruleset_score, probability):
+def combined_score(ruleset_score, probability, keyword_count, cleaned_text, emails, domains, urls):
+
+    #run user input
+    ruleset_score, probability, keyword_count, cleaned_text, emails, domains, urls = process_user_input()
+
     # call ml function here to give variable a score for now is 0
     ml_score = probability * 100
     print("ruleset_score:", ruleset_score, "ml_score:", ml_score)
@@ -73,8 +58,26 @@ def combined_score(ruleset_score, probability):
         risk_level = "Medium danger"
     else:
         risk_level = "High danger"
-    
-    return risk_score, risk_level
+
+    # Prepare response data
+    response_data = {
+        'risk_score': risk_score,
+        'risk_level':risk_level,
+        'sus_keywords':keyword_count,
+        'cleaned_text': cleaned_text,
+        'emails': emails,
+        'domains': domains,
+        'urls': urls
+    }
+
+        # Send results back to Flask
+    try:
+        requests.post('http://localhost:5000/api/update_results', 
+                    json=response_data)
+    except Exception as e:
+        print(f"Error sending results: {e}")
+
+    return response_data
 
 
 if __name__ == "__main__":
