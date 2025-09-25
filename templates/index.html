@@ -1,6 +1,28 @@
 {% extends "base.html" %}
 
 {% block content %}
+<!-- Live Risk Analysis Display -->
+<div class="risk-analysis-section">
+    <h3>Latest Email Analysis</h3>
+    <div class="risk-cards" id="live-risk-cards">
+        <div class="info-card" id="email-risk-card">
+            <div class="info-label">Email Risk</div>
+            <div class="info-value" id="risk-level-display">No data yet</div>
+        </div>
+        <div class="info-card" id="risk-score-card">
+            <div class="info-label">Risk Score</div>
+            <div class="info-value" id="risk-score-display">--/100</div>
+        </div>
+        <div class="info-card" id="keywords-card">
+            <div class="info-label">Keywords</div>
+            <div class="info-value" id="keywords-display">--</div>
+        </div>
+    </div>
+    <p style="text-align: center; color: #6c757d; font-style: italic; margin-top: 15px;" id="analysis-status">
+        Process an email below to see live risk analysis results here.
+    </p>
+</div>
+
 <!-- Main form for email text input submission -->
 <form method="POST" action="/process" onsubmit="return validateForm()">
     <div class="form-group">
@@ -29,7 +51,13 @@ The processor will extract and structure:
 • Subject lines and sender information
 • Recipient details (To, Cc, Bcc)
 • Forensic data (Message-ID, Date, Reply-To)
-• Clean message body content"></textarea>
+• Clean message body content
+
+PLUS Advanced Risk Analysis:
+• Phishing probability scoring
+• Suspicious keyword detection
+• Threat level classification
+• Security recommendations"></textarea>
         
         <!-- Information grid explaining processing capabilities and limitations -->
         <div class="input-info">
@@ -37,20 +65,50 @@ The processor will extract and structure:
                 <strong>Maximum size:</strong> 1MB (1,000,000 characters)
             </div>
             <div class="info-item">
-                <strong>Processing:</strong> Extracts structured data for security analysis
+                <strong>Processing:</strong> Extracts structured data + risk analysis
             </div>
             <div class="info-item">
                 <strong>Preserves:</strong> Headers needed for phishing detection
             </div>
             <div class="info-item">
-                <strong>Removes:</strong> Technical noise and formatting clutter
+                <strong>Security:</strong> AI-powered threat assessment
             </div>
         </div>
     </div>
 
     <!-- Main submit button with loading state handling -->
-    <button type="submit" class="submit-btn">Process Email Text</button>
+    <button type="submit" class="submit-btn">Analyze Email Security</button>
 </form>
+
+<!-- Risk Level Examples Section -->
+<div class="analysis-tips">
+    <h3>Risk Level Examples:</h3>
+    <div class="tips-grid">
+        <!-- Safe example -->
+        <div class="tip-card" style="border-left-color: #28a745;">
+            <h4><span class="risk-badge safe">SAFE</span> Legitimate Email</h4>
+            <p>Trusted sender, no suspicious keywords, proper authentication headers, legitimate business content.</p>
+        </div>
+        
+        <!-- Low risk example -->
+        <div class="tip-card" style="border-left-color: #ffc107;">
+            <h4><span class="risk-badge low">LOW</span> Minor Concerns</h4>
+            <p>Unfamiliar sender but legitimate domain, minimal urgency language, standard email structure.</p>
+        </div>
+        
+        <!-- Medium risk example -->
+        <div class="tip-card" style="border-left-color: #fd7e14;">
+            <h4><span class="risk-badge medium">MEDIUM</span> Suspicious Elements</h4>
+            <p>Generic greetings, urgency pressure, suspicious links, sender-display name mismatch.</p>
+        </div>
+        
+        <!-- High risk example -->
+        <div class="tip-card" style="border-left-color: #dc3545;">
+            <h4><span class="risk-badge high">HIGH</span> Likely Phishing</h4>
+            <p>Spoofed sender, multiple red flags, malicious URLs, credential harvesting attempts.</p>
+        </div>
+    </div>
+</div>
 
 <!-- Navigation section for additional features -->
 <div class="navigation">
@@ -72,11 +130,18 @@ The processor will extract and structure:
         
         <!-- Detailed API endpoint documentation -->
         <div class="api-example">
-            <h4>Detailed API (Returns JSON with metadata)</h4>
+            <h4>Detailed API with Risk Analysis (Returns JSON with metadata)</h4>
             <code>POST /api/process_detailed</code>
             <pre>curl -X POST -H "Content-Type: application/json" \
   -d '{"text":"Subject: Test\nFrom: test@example.com\nHello world"}' \
   http://localhost:5000/api/process_detailed</pre>
+        </div>
+
+        <!-- New API endpoint for risk analysis -->
+        <div class="api-example">
+            <h4>Get Latest Analysis with Risk Data</h4>
+            <code>GET /api/get_latest_with_risk</code>
+            <pre>curl -X GET http://localhost:5000/api/get_latest_with_risk</pre>
         </div>
     </div>
 </div>

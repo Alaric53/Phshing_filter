@@ -18,6 +18,7 @@ except ImportError as e:
 
 # Global variable to store the latest processed text for pipeline access
 latest_processed_text = ""
+latest_risk_analysis = {}  # Store risk analysis results
 processing_queue = []  # Queue for multiple texts if needed
 
 def store_processed_text(processed_text: str, original_length: int, processing_time: float):
@@ -64,6 +65,14 @@ def store_processed_text(processed_text: str, original_length: int, processing_t
         
     except Exception as e:
         print(f"Warning: Could not save to files: {e}")
+
+def store_risk_analysis(risk_data: dict):
+    """
+    Store risk analysis results for display
+    """
+    global latest_risk_analysis
+    latest_risk_analysis = risk_data
+    print(f"✓ Risk analysis stored: {risk_data.get('risk_level', 'Unknown')} - {risk_data.get('risk_score', 0)}%")
     
 def get_latest_processed_text() -> str:
     """
@@ -83,9 +92,10 @@ def get_processing_queue() -> list:
 
 def clear_processing_queue():
     """Clear the processing queue (useful for pipeline cleanup)."""
-    global processing_queue, latest_processed_text
+    global processing_queue, latest_processed_text, latest_risk_analysis
     processing_queue.clear()
     latest_processed_text = ""
+    latest_risk_analysis = {}
     print("Processing queue cleared")
 
 # Create the Flask application
@@ -186,17 +196,21 @@ def process_text():
         # Store processed text for external pipeline access
         store_processed_text(clean_text, text_length, processing_time)
         
-        # Show success message
-        flash('Email text processed successfully and stored for pipeline access!', 'success')
+        # Wait a moment for Main.py to process and return results
+        time.sleep(0.5)  # Give Main.py time to analyze
         
-        # Show the results page
+        # Show success message
+        flash('Email text processed successfully and analyzed for security risks!', 'success')
+        
+        # Show the results page with risk analysis
         return render_template('result.html',
                              original_text=text_content[:500] + ('...' if len(text_content) > 500 else ''),
                              result=clean_text,
                              processing_time=f"{processing_time:.4f}s",
                              input_length=f"{text_length:,} characters",
                              output_length=f"{len(clean_text):,} characters",
-                             throughput=f"{text_length / processing_time / 1000:.1f} KB/s" if processing_time > 0 else "N/A")
+                             throughput=f"{text_length / processing_time / 1000:.1f} KB/s" if processing_time > 0 else "N/A",
+                             risk_analysis=latest_risk_analysis)
     
     except Exception as e:
         flash(f'Error processing text: {str(e)}', 'error')
@@ -296,6 +310,21 @@ def api_process_detailed():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
 
+@app.route('/api/update_results', methods=['POST'])
+def update_results():
+    """
+    API endpoint for Main.py to send back risk analysis results
+    """
+    try:
+        if request.is_json:
+            risk_data = request.get_json()
+            store_risk_analysis(risk_data)
+            return jsonify({'success': True, 'message': 'Risk analysis updated'})
+        else:
+            return jsonify({'success': False, 'error': 'JSON data required'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
 @app.route('/api/get_latest', methods=['GET'])
 def get_latest():
     """
@@ -316,6 +345,20 @@ def get_latest():
             'success': False,
             'message': 'No processed text available'
         })
+
+@app.route('/api/get_latest_with_risk', methods=['GET'])
+def get_latest_with_risk():
+    """
+    API endpoint to get latest processed text with risk analysis
+    """
+    global latest_processed_text, latest_risk_analysis
+    
+    return jsonify({
+        'success': True,
+        'text': latest_processed_text,
+        'risk_analysis': latest_risk_analysis,
+        'timestamp': time.time()
+    })
 
 @app.route('/api/get_queue', methods=['GET'])
 def get_queue():
@@ -372,7 +415,8 @@ def performance_stats():
                 'max_text_length': f"{request_stats['max_text_length']:,} chars"
             },
             'processor_stats': processor_stats,
-            'processor_available': PROCESSOR_AVAILABLE
+            'processor_available': PROCESSOR_AVAILABLE,
+            'latest_risk_analysis': latest_risk_analysis
         })
     
     except Exception as e:
@@ -398,7 +442,7 @@ def internal_server_error(e):
 if __name__ == '__main__':
     try:
         print("=" * 60)
-        print("Email Processor Web Application with Pipeline Integration")
+        print("Email Processor Web Application with Risk Analysis")
         print("=" * 60)
         print(f"Processor available: {'✓ Yes' if PROCESSOR_AVAILABLE else '✗ No'}")
         print("Web Interface: http://localhost:5000")
@@ -407,14 +451,17 @@ if __name__ == '__main__':
         print("API Endpoints:")
         print("   • POST /api/process          - Returns plain text")
         print("   • POST /api/process_detailed - Returns JSON with metadata")
+        print("   • POST /api/update_results   - Receive risk analysis from Main.py")
         print()
         print("Pipeline Integration Endpoints:")
         print("   • GET  /api/get_latest       - Get latest processed text")
+        print("   • GET  /api/get_latest_with_risk - Get text with risk analysis")
         print("   • GET  /api/get_queue        - Get all recent processed texts")
         print("   • POST /api/clear_queue      - Clear the processing queue")
         print()
         print("Your pipeline can now:")
         print("   ✓ Get cleaned text automatically after processing")
+        print("   ✓ Send risk analysis results back to web interface")
         print("   ✓ Access recent processing history")
         print("   ✓ Send text directly for processing via API")
         print("=" * 60)
