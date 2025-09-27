@@ -12,9 +12,12 @@ def load_keywords(filepath="suspicious_keywords.txt"):
 def load_safe_domains(filepath="safe_domains.csv"):
     safe_domains = set()
     with open(filepath, "r", encoding="utf-8") as f:
+        next(f)  # Skip the header row
         for line in f:
-            rank, domain = line.strip().split(",")
-            safe_domains.add(domain.lower())
+            parts = line.strip().split(",")
+            if len(parts) >= 3:  # Ensure we have enough columns
+                domain = parts[2]  # Domain is in the 3rd column (index 2)
+                safe_domains.add(domain.lower())
     return safe_domains
 
 # Load them once at startup
@@ -107,9 +110,12 @@ def process_email_and_score(cleaned_text, emails, domains, urls, ips):   #Return
     urlIP = " ".join((urls or []) + (ips or []))
 
     return calculator(sender, subject, body, urlIP)
+'''
+def main():
+    print(process_email_and_score("Phishing Phishing Phishing Phishing Phishing Phishing Phishing Phishing ", [], [], [], []))
 
-
-
-
+if __name__ == "__main__":
+    main()
+'''
 
 

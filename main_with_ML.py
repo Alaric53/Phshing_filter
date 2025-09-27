@@ -3,7 +3,6 @@ import requests
 import subprocess
 import ruleset
 import NLP_ML
-print(NLP_ML.__file__)
 
 def main():
     subprocess.Popen(['python', 'app.py'])#run app.py in background
@@ -74,6 +73,7 @@ def combined_score(ruleset_score, probability, keyword_count, cleaned_text, emai
     try:
         requests.post('http://localhost:5000/api/update_results', 
                     json=response_data)
+        requests.post('http://localhost:5000/api/clear_')
     except Exception as e:
         print(f"Error sending results: {e}")
 

@@ -87,6 +87,7 @@ Cashcashcash
 Casino
 Celebrity
 Cell phone cancer scam
+Phishing
 Cents on the dollar
 Certified
 Chance
@@ -202,12 +203,14 @@ Free offer
 Free preview
 Free priority mail
 Free quote
+Scam
 Free sample
 Free trial
 Free website
 Freedom
 Friend
 Full refund
+Virus
 Get
 Get it now
 Get out of debt

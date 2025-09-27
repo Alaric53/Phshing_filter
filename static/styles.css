@@ -21,7 +21,7 @@
 }
 
 .risk-analysis-section h3::before {
-    content: "🛡️";
+    content: "ðŸ›¡ï¸";
     font-size: 1.2em;
 }
 
@@ -151,7 +151,7 @@
 }
 
 .suspicious-keywords h4::before {
-    content: "⚠️";
+    content: "âš ï¸";
     font-size: 1em;
 }
 
@@ -273,7 +273,7 @@
 }
 
 .risk-recommendations li::before {
-    content: "•";
+    content: "â€¢";
     color: var(--risk-color);
     font-size: 1.2em;
     position: absolute;
