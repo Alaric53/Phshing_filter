@@ -68,7 +68,6 @@ class datacleaning:
         #stemming words into base words,
         words = [stemmer.stem(w) for w in words]
         cleaned_text = " ".join(words)
-        print(urls)
         return cleaned_text, emails, domains, urls, ips
 
 
@@ -78,7 +77,7 @@ class datacleaning:
         file_name = file.replace(".txt", "")
         output_dir = "cleaned_data"
         try:
-            with open("test data/"+file, "r", encoding="utf-8") as f:
+            with open("testdata/"+file, "r", encoding="utf-8") as f:
                 
                 for line in f:
                     line = line.strip()
@@ -96,9 +95,7 @@ class datacleaning:
                         else:
                             #if label is not "yes" or "no" skips line
                             continue
-                        
-
-
+                    
                         cleaned_text, emails, domains, urls, ips = self.cleantext(body)
                         emails = "\n".join(emails)
                         domains = "\n".join(domains)
@@ -121,8 +118,9 @@ class datacleaning:
             writer.writeheader()
             writer.writerows(rows)
 
-        print("Saved", len(rows), "rows to " + file_name + ".csv")
         
+        output = f"Saved {len(rows)} rows to cleaned_{file_name}.csv"
+        return output
         
 
         
