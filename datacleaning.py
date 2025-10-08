@@ -14,21 +14,39 @@ class datacleaning:
     #ensure there are characters before and after @. 
     email_pattern = r'[\w\.-]+@[\w\.-]+\.[a-zA-Z]{2,}'
     #matches http and https 
-    url_pattern = r'(https?://[^\s?]+|www\.[^\s?]+)'
+    url_pattern = re.compile(
+    r'(?:https?://|www\.)'
+    r'(?:(?:[a-zA-Z0-9\-]+\.)*[a-zA-Z0-9\-]+\.[a-zA-Z]{2,}'
+    r'|(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}'
+    r'(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(?::\d{1,5})?)'
+    r'(?:/[^\s<>"{}|\\^`\[\]]*)?')
+    #old regex 
+    #url_pattern = r'(?:https?://|www\.)(?:(?:[a-zA-Z0-9\-]+\.)*[a-zA-Z0-9\-]+\.[a-zA-Z]{2,}|(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(?::\d{1,5})?)(?:/[^\s<>"{}|\\^`\[\]]*)?'
     #ensure ip address values are valid which is less than 255
-    ip_pattern = ipv4_pattern_with_params = r'\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(?:[^\s.]*)'
+    ip_pattern = re.compile(
+    r'(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}'
+    r'(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)'
+    r'(?::\d{1,5})?'       # optional port
+    r'(?!\d)'              # don’t allow trailing digit
+    )
+    #ip_pattern = r'\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(?::\d{1,5})?\b'
     nltk.download('stopwords')
     stop_words = set(stopwords.words('english'))
     def __init__(self):
         # Initialize resources once when the class is created
         self.stemmer = PorterStemmer()
+
+    def clean_trailing_punctuation(self, text):
+        return re.sub(r'[.,;:!?)]+$', '', text)
+
     def cleantext(self,body):
         #Extracting and storing email, domain and url data
+        body=body.lower()
         emails = re.findall(self.email_pattern, body)
         #set make sure that my list values are unique
         emails = list(set([email.removesuffix('.') for email in emails]))
         urls = re.findall(self.url_pattern,body)
-        urls = list(set([url.removesuffix('.') for url in urls]))
+        urls = list(set([self.clean_trailing_punctuation(url) for url in urls]))
         ips = re.findall(self.ip_pattern, body)
         ips = list(set(ips))
         domains = [email.split('@')[-1] for email in emails]
@@ -50,7 +68,7 @@ class datacleaning:
         #stemming words into base words,
         words = [stemmer.stem(w) for w in words]
         cleaned_text = " ".join(words)
-
+        print(urls)
         return cleaned_text, emails, domains, urls, ips
 
 

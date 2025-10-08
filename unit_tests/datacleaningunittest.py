@@ -1,5 +1,12 @@
-from datacleaning import datacleaning
+import sys
+import os
+
+# Add parent directory to path
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 import unittest
+from datacleaning import datacleaning
+
 
 clean = datacleaning()
 
@@ -12,15 +19,16 @@ clean = datacleaning()
 
 
 class TestDataCleaning(unittest.TestCase):
-    def test_cleantext_with_ip_and_port(self):
+    def test_cleantext_with_ip_and_port_and_iplinks(self):
         #test strings with valid ips and ports
-        input_text = "input text here 192.168.12.1:8080 or 192.168.12.2."
+        input_text = "input text here192.168.12.1:8080...192.168.12.2 or 192.168.12.2...http://192.168.1.100:443/banking/login."
         cleaned_text, emails, domains, urls, ips = clean.cleantext(input_text)
         expected_cleaned_text = "input text"
         expected_emails = []
         expected_domains = []
-        expected_urls = []
-        expected_ips = ["192.168.12.1:8080","192.168.12.2"]
+        expected_urls = ["http://192.168.1.100:443/banking/login"]
+        expected_ips = ["192.168.12.1:8080","192.168.12.2","192.168.1.100:443"]
+        
 
         self.assertEqual(cleaned_text, expected_cleaned_text)
         self.assertCountEqual(emails, expected_emails)
@@ -30,11 +38,11 @@ class TestDataCleaning(unittest.TestCase):
 
     def test_cleantext_with_email(self):
         #test strings with valid emails
-        input_text = "my email is 1002@outlook.com or also zhang@gmail.com"
+        input_text = "my email is 1002@outlook.com!!!1002@outlook.com or also support@g00gle.com..."
         cleaned_text, emails, domains, urls, ips = clean.cleantext(input_text)
         expected_cleaned_text = "email also"
-        expected_emails = ["1002@outlook.com","zhang@gmail.com"]
-        expected_domains = ["outlook.com","gmail.com"]
+        expected_emails = ["1002@outlook.com","support@g00gle.com"]
+        expected_domains = ["outlook.com","g00gle.com"]
         expected_urls = []
         expected_ips = []
         self.assertEqual(cleaned_text, expected_cleaned_text)
@@ -45,12 +53,12 @@ class TestDataCleaning(unittest.TestCase):
 
     def test_cleantext_with_urls(self):
         #test strings with valid URLS
-        input_text = "my website is https://www.notscam.com and www.wow.co.uk"
+        input_text = "my website is https://www.notscam.com!!!https://www.NOTscam.com AND sitewww.sub.domain.co.uk/test!!!! and http://site.org/path?key=value&token=abc123.. and http://bit.ly/abc123."
         cleaned_text, emails, domains, urls, ips = clean.cleantext(input_text)
-        expected_cleaned_text = "websit"
+        expected_cleaned_text = "websit site"
         expected_emails = []
         expected_domains = []
-        expected_urls = ["https://www.notscam.com","www.wow.co.uk"]
+        expected_urls = ["https://www.notscam.com","www.sub.domain.co.uk/test","http://site.org/path?key=value&token=abc123","http://bit.ly/abc123"]
         expected_ips = []
 
         self.assertEqual(cleaned_text, expected_cleaned_text)
@@ -61,11 +69,11 @@ class TestDataCleaning(unittest.TestCase):
 
     def test_cleantext_invalid_formats(self):
         # Test strings that are not valid emails, URLs, or IPs
-        input_text = "test@.com this is not an email. Also 999.999.999.999. A fake URL: htts://fake.com"
+        input_text = "test@.com this is not an email. Also 999.999.999.999. A fake URL: htts://fake.com Invalid IP: 192.168.1.256"
         cleaned_text, emails, domains, urls, ips = clean.cleantext(input_text)
         
         # Expected output should not contain any of the invalid formats
-        expected_cleaned_text = "testcom email also 999999999999 a fake url httsfakecom"
+        expected_cleaned_text = "testcom email also 999999999999 fake url httsfakecom invalid ip 1921681256"
         expected_emails = []
         expected_domains = []
         expected_urls = []
