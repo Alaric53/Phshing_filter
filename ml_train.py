@@ -49,7 +49,7 @@ while (accuracy < 1 and i < MAX_TRIES):
     i += 1
 
 
-#Saving best configuration
+#Saving best model
 #Split Training(70%) and Testing(30%) Data
 X_train, X_test, Y_train, Y_test = train_test_split(inputs,target,test_size=0.3,random_state=max_i)
 
