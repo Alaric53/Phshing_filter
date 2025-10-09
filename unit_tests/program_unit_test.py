@@ -42,14 +42,6 @@ class TestRuleSet(unittest.TestCase):
         self.assertEqual(score, 4)   # 2 urls 2 points each
         self.assertIn("http://scam.com", urls)
         
-#calculator and processor unit test to be added
-
-
-
-
-
-
-
 if __name__ == "__main__":
     unittest.main()
 
