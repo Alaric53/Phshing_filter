@@ -1,1 +1,37 @@
+import pandas as pd
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split
+from sklearn.feature_extraction.text import TfidfVectorizer
+import joblib
 
+# Using unigrams, bigrams, and trigrams and setting maximum document frequency of 90%
+vectorizer = TfidfVectorizer(ngram_range=(1, 3), max_df=0.9)
+model = LogisticRegression()
+
+#Initialise Dataframe
+df = pd.read_csv('cleaned_data/cleaned_testingdata.csv')
+
+#Training Data
+target = df.label
+df.emails = df.emails.fillna('')
+df.domains = df.domains.fillna('')
+df.urls = df.urls.fillna('')
+df.ips = df.ips.fillna('')
+inputs = df.domains + df.body + df.emails + df.urls + df.ips
+
+#Split Training(70%) and Testing(30%) Data
+X_train, X_test, Y_train, Y_test = train_test_split(inputs,target,test_size=0.3,random_state=2524)
+
+#Training
+xtrain_tfidf = vectorizer.fit_transform(X_train)
+model.fit(xtrain_tfidf, Y_train)
+
+#Testing
+xtest_tfidf = vectorizer.transform(X_test)
+
+#Results
+accuracy = model.score(xtest_tfidf, Y_test)
+print(accuracy)
+
+# Saving the trained model and vectorizer
+joblib.dump({'model': model, 'vectorizer': vectorizer}, 'model/model_trained.joblib')
