@@ -16,7 +16,7 @@ def analyse(loaded_model_data, cleaned_text, emails, domains, urls, ips):
     domains = domains if domains else [""]
     urls = urls if urls else [""]
     ips = ips if ips else [""]
-    new_input = [cleaned_text + " " + emails + " " + domains + " " + urls + " " + ips]
+    new_input = (cleaned_text + " " + emails + " " + domains + " " + urls + " " + ips).split()
     
     # Vectorize the new input
     new_input_tfidf = vectorizer.transform(new_input)
@@ -33,6 +33,7 @@ def analyse(loaded_model_data, cleaned_text, emails, domains, urls, ips):
     
     #Return probability(Positive%)
     return probability[0][1]
+
 
 
 
