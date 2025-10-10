@@ -1,8 +1,3 @@
-from sklearn.linear_model import LogisticRegression
-
-# Using unigrams, bigrams, and trigrams and setting maximum document frequency of 90%
-model = LogisticRegression()
-
 def analyse(loaded_model_data, cleaned_text="", emails="", domains="", urls="", ips=""):
     # Extract model and vectorizer from the loaded data
     model = loaded_model_data['model']
@@ -33,5 +28,6 @@ def analyse(loaded_model_data, cleaned_text="", emails="", domains="", urls="", 
     
     #Return probability(Positive%)
     return probability[0][1]
+
 
 
