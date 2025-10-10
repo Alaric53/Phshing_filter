@@ -1,8 +1,8 @@
+import joblib
 import pandas as pd
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 from sklearn.feature_extraction.text import TfidfVectorizer
-import joblib
 
 # Using unigrams, bigrams, and trigrams and setting maximum document frequency of 90%
 vectorizer = TfidfVectorizer(ngram_range=(1, 3), max_df=0.9)
