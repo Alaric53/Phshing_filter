@@ -3,17 +3,17 @@ from sklearn.linear_model import LogisticRegression
 # Using unigrams, bigrams, and trigrams and setting maximum document frequency of 90%
 model = LogisticRegression()
 
-def analyse(loaded_model_data, cleaned_text, emails, domains, urls, ips):
+def analyse(loaded_model_data="", cleaned_text="", emails="", domains="", urls="", ips=""):
     # Extract model and vectorizer from the loaded data
     model = loaded_model_data['model']
     vectorizer = loaded_model_data['vectorizer']
     
     # Ensure none of the input lists are empty
-    cleaned_text_str = " ".join(cleaned_text) if isinstance(cleaned_text, list) and cleaned_text else str(cleaned_text) if cleaned_text else ""
-    emails_str = " ".join(emails) if isinstance(emails, list) and emails else str(emails) if emails else ""
-    domains_str = " ".join(domains) if isinstance(domains, list) and domains else str(domains) if domains else ""
-    urls_str = " ".join(urls) if isinstance(urls, list) and urls else str(urls) if urls else ""
-    ips_str = " ".join(ips) if isinstance(ips, list) and ips else str(ips) if ips else ""
+    cleaned_text_str = " ".join(cleaned_text) if isinstance(cleaned_text, list) and cleaned_text 
+    emails_str = " ".join(emails) if isinstance(emails, list) and emails
+    domains_str = " ".join(domains) if isinstance(domains, list) and domains
+    urls_str = " ".join(urls) if isinstance(urls, list) and urls else str(urls)
+    ips_str = " ".join(ips) if isinstance(ips, list) and ips else str(ips)
     
     # Combine all text features into a single string
     combined_text = " ".join([cleaned_text_str, emails_str, domains_str, urls_str, ips_str])
@@ -33,3 +33,4 @@ def analyse(loaded_model_data, cleaned_text, emails, domains, urls, ips):
     
     #Return probability(Positive%)
     return probability[0][1]
+
