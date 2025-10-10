@@ -1,8 +1,6 @@
 from sklearn.linear_model import LogisticRegression
-from sklearn.feature_extraction.text import TfidfVectorizer
 
 # Using unigrams, bigrams, and trigrams and setting maximum document frequency of 90%
-vectorizer = TfidfVectorizer(ngram_range=(1, 3), max_df=0.9)
 model = LogisticRegression()
 
 def analyse(loaded_model_data, cleaned_text, emails, domains, urls, ips):
@@ -35,6 +33,7 @@ def analyse(loaded_model_data, cleaned_text, emails, domains, urls, ips):
     
     #Return probability(Positive%)
     return probability[0][1]
+
 
 
 
