@@ -7,8 +7,8 @@ def analyse(loaded_model_data, cleaned_text="", emails="", domains="", urls="", 
     cleaned_text_str = " ".join(cleaned_text) if isinstance(cleaned_text, list) else str(cleaned_text)
     emails_str = " ".join(emails) if isinstance(emails, list) else str(email)
     domains_str = " ".join(domains) if isinstance(domains, list) else str(domains)
-    urls_str = " ".join(urls) if isinstance(urls, list) else str(urls) else str(urls)
-    ips_str = " ".join(ips) if isinstance(ips, list) else str(ips) else str(ips)
+    urls_str = " ".join(urls) if isinstance(urls, list) else str(urls)
+    ips_str = " ".join(ips) if isinstance(ips, list) else str(ips)
     
     # Combine all text features into a single string
     combined_text = " ".join([cleaned_text_str, emails_str, domains_str, urls_str, ips_str])
@@ -28,6 +28,7 @@ def analyse(loaded_model_data, cleaned_text="", emails="", domains="", urls="", 
     
     #Return probability(Positive%)
     return probability[0][1]
+
 
 
 
