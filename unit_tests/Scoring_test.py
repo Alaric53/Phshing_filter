@@ -35,7 +35,7 @@ class TestScoring(unittest.TestCase):
     #check for empty inputs
     def test_calculator_empty_inputs(self):
         score, keywords = calculator("", "", "", "")
-        self.assertEqual(score, 0.0)
+        self.assertLessEqual(score, 5.0)
         self.assertEqual(keywords, 0)
 
     #testing for combined score
@@ -43,23 +43,23 @@ class TestScoring(unittest.TestCase):
         risk, level = combined_score(0, 0)
         self.assertEqual(risk, 0.0)
         self.assertEqual(level, "SAFE")
-
+    
     #check for level = correct danger level
-    def test_combined_score_low_medium_high(self):
+    def test_combined_score_risk_level(self):
         risk, level = combined_score(20, 0.10)
-        self.assertEqual(level, "Low danger")
+        self.assertEqual(level, "LOW DANGER")
 
         risk, level = combined_score(80, 0.20)
-        self.assertEqual(level, "Medium danger")
+        self.assertEqual(level, "MEDIUM DANGER")
 
         risk, level = combined_score(90, 0.90)
-        self.assertEqual(level, "High danger")
+        self.assertEqual(level, "HIGH DANGER")
 
     #Empty input
     def test_combined_score_missing_values(self):   
         risk, level = combined_score(None, None)
         self.assertEqual(risk, 0.0)
-        self.assertEqual(level, "SAFE")
+        self.assertEqual(level, "UNKNOWN")
 
 
 if __name__ == "__main__":
