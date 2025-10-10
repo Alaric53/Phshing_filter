@@ -9,7 +9,7 @@ vectorizer = TfidfVectorizer(ngram_range=(1, 3), max_df=0.9)
 model = LogisticRegression()
 
 #Initialise Dataframe
-df = pd.read_csv('cleaned_data/cleaned_testingdata.csv')
+df = pd.read_csv('cleaned_data/cleaned_trainingdata.csv')
 
 #Training Data
 target = df.label
