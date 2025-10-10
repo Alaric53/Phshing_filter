@@ -1,7 +1,7 @@
 import re
 from text_processor import get_processor
 from nltk.stem import PorterStemmer
-
+#verifying and verified to verify
 stemmer = PorterStemmer()
 
 def load_keywords(filepath="suspicious_keywords.txt"):
@@ -50,7 +50,7 @@ def keyword_position_scoring(subject,body):
             score += 2                            # flagged keywords in subject are more serious
     return score 
 
-def levenshtein_distance(a,b):
+def levenshtein_distance(a,b):      #paypal vs paypa1
     dp = [[0] * (len(b)+1) for _ in range(len(a)+1)]
     for i in range(len(a)+1):
         for j in range(len(b)+1):
@@ -117,6 +117,7 @@ def main():
 if __name__ == "__main__":
     main()
 '''
+
 
 
 
