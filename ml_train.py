@@ -18,7 +18,7 @@ df.emails = df.emails.fillna('')
 df.domains = df.domains.fillna('')
 df.urls = df.urls.fillna('')
 df.ips = df.ips.fillna('')
-inputs = df.domains + df.body + df.emails + df.urls + df.ips
+inputs = [a + b + c + d + e for a, b, c, d, e in zip(df.domains, df.body, df.emails, df.urls, df.ips)]
 
 #Testing different configurations
 i=0
