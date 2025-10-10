@@ -13,6 +13,7 @@ df = pd.read_csv('cleaned_data/cleaned_testingdata.csv')
 
 #Training Data
 target = df.label
+df.body = df.body.fillna('')
 df.emails = df.emails.fillna('')
 df.domains = df.domains.fillna('')
 df.urls = df.urls.fillna('')
