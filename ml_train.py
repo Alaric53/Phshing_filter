@@ -18,7 +18,7 @@ df.emails = df.emails.fillna('')
 df.domains = df.domains.fillna('')
 df.urls = df.urls.fillna('')
 df.ips = df.ips.fillna('')
-inputs = [a + b + c + d + e for a, b, c, d, e in zip(df.domains, df.body, df.emails, df.urls, df.ips)]
+data = [a + b + c + d + e for a, b, c, d, e in zip(df.domains, df.body, df.emails, df.urls, df.ips)]
 
 #Testing different configurations
 i=0
@@ -28,7 +28,7 @@ stored_accuracy = 0
 MAX_TRIES = 3000
 while (accuracy < 1 and i < MAX_TRIES):
     #Split Training(70%) and Testing(30%) Data
-    X_train, X_test, Y_train, Y_test = train_test_split(inputs,target,test_size=0.3,random_state=i)
+    X_train, X_test, Y_train, Y_test = train_test_split(data,target,test_size=0.3,random_state=i)
 
     #Training
     xtrain_tfidf = vectorizer.fit_transform(X_train)
@@ -52,7 +52,7 @@ while (accuracy < 1 and i < MAX_TRIES):
 
 #Saving best model
 #Split Training(70%) and Testing(30%) Data
-X_train, X_test, Y_train, Y_test = train_test_split(inputs,target,test_size=0.3,random_state=max_i)
+X_train, X_test, Y_train, Y_test = train_test_split(data,target,test_size=0.3,random_state=max_i)
 
 #Training
 xtrain_tfidf = vectorizer.fit_transform(X_train)
