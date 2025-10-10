@@ -9,7 +9,7 @@ def analyse(loaded_model_data, cleaned_text, emails, domains, urls, ips):
     vectorizer = loaded_model_data['vectorizer']
     
     # Ensure none of the input lists are empty
-    cleaned_text_str = str(cleaned_text) if cleaned_text else ""
+    cleaned_text_str = " ".join(cleaned_text) if isinstance(cleaned_text, list) and cleaned_text else str(cleaned_text) if cleaned_text else ""
     emails_str = " ".join(emails) if isinstance(emails, list) and emails else str(emails) if emails else ""
     domains_str = " ".join(domains) if isinstance(domains, list) and domains else str(domains) if domains else ""
     urls_str = " ".join(urls) if isinstance(urls, list) and urls else str(urls) if urls else ""
@@ -33,6 +33,7 @@ def analyse(loaded_model_data, cleaned_text, emails, domains, urls, ips):
     
     #Return probability(Positive%)
     return probability[0][1]
+
 
 
 
