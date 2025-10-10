@@ -16,13 +16,10 @@ class datacleaning:
     #matches http and https 
     url_pattern = re.compile(
     r'(?:https?://|www\.)'
-    r'(?:(?:[a-zA-Z0-9\-]+\.)+[a-zA-Z]{2,}'
+    r'(?:(?:[a-zA-Z0-9\-]+\.)*[a-zA-Z0-9\-]+\.[a-zA-Z]{2,}'
     r'|(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}'
     r'(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(?::\d{1,5})?)'
-    # path part — non-greedy + stop before next http/www
-    r'(?:/[^\s<>"{}|\\^`\[\]]*?)?'
-    r'(?=(?:\s|$|https?://|www\.))'   # 👈 stop if new URL or end/space
-)
+    r'(?:/[^\s<>"{}|\\^`\[\]]*)?')
 
 
     #old regex 
@@ -74,6 +71,7 @@ class datacleaning:
         #stemming words into base words,
         words = [stemmer.stem(w) for w in words]
         cleaned_text = " ".join(words)
+        print(urls)
         return cleaned_text, emails, domains, urls, ips
 
 
