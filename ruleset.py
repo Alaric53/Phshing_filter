@@ -78,7 +78,6 @@ def lookalike_domain_check(domain):
             for safe in SAFE_DOMAINS:
                 distance = levenshtein_distance(i, safe)
                 if distance <= 2:   # small difference means it is suspicious
-                    print("leviosuh distance", distance)
                     return 10
     
     return 0
@@ -110,7 +109,7 @@ def calculator(sender: str, subject: str, body: str, urlIP: str) -> tuple:  #Mai
     return ruleset_score, keyword_count
 
 
-def process_email_and_score(cleaned_text, emails, domains, urls, ips):   #Returns tuple (danger_level, percentage_score, keyword_count)
+def process_email_and_score(cleaned_text, emails, domains, urls, ips):  
     sender = " ".join(emails + domains) if emails or domains else ""
     subject = cleaned_text
     body = cleaned_text
