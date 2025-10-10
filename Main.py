@@ -125,8 +125,14 @@ def process_user_input(cleaned_data=None):
 
 def combined_score(ruleset_score, probability):
     """Combine ruleset and ML scores (unchanged logic)"""
-    # ML score calculation
-    ml_score = probability * 100
+    if ruleset_score is None or probability is None:
+        return 0, "UNKNOWN"
+    try:
+        # ML score calculation
+        ml_score = float(probability) * 100
+        ruleset_score = float(ruleset_score)
+    except (TypeError, ValueError) as e:
+        return 0, "ERROR"
     print(f"Scores - Ruleset: {ruleset_score}, ML: {ml_score}")
     
     # Combine with 50/50 weightage
