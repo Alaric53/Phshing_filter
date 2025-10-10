@@ -68,13 +68,19 @@ def levenshtein_distance(a,b):      #paypal vs paypa1
     return dp[len(a)][len(b)]
 
 
-def lookalike_domain_check(domain):             # checker using levenshtein alg
-    if domain in SAFE_DOMAINS:                  # exact match = safe
-        return 0
-    for safe in SAFE_DOMAINS:
-        distance = levenshtein_distance(domain, safe)
-        if distance <= 2:   # small difference means it is suspicious
-            return 3        
+def lookalike_domain_check(domain):   
+    
+    pattern = r"https?://(?:www.)?(.*)" 
+    domain_only = re.sub(pattern, r"\1", domain)
+    
+    for i in domain_only.split(' '):                  # exact match = safe
+        if i not in SAFE_DOMAINS:
+            for safe in SAFE_DOMAINS:
+                distance = levenshtein_distance(i, safe)
+                if distance <= 2:   # small difference means it is suspicious
+                    print("leviosuh distance", distance)
+                    return 10
+    
     return 0
 
 
@@ -93,7 +99,7 @@ def calculator(sender: str, subject: str, body: str, urlIP: str) -> tuple:  #Mai
     keyword_count = suspicious_keyword_check(subject, body)
     keyword_score = min(15, keyword_count)
     position_score = min(15, keyword_position_scoring(subject, body))
-    lookalike_score = lookalike_domain_check(sender_domain)
+    lookalike_score = lookalike_domain_check(urlIP)
     url_score, suspicious_urls = suspicious_url_detection(urlIP)
     url_score = min(15, url_score)
 
