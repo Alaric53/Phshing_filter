@@ -16,10 +16,15 @@ class datacleaning:
     #matches http and https 
     url_pattern = re.compile(
     r'(?:https?://|www\.)'
-    r'(?:(?:[a-zA-Z0-9\-]+\.)*[a-zA-Z0-9\-]+\.[a-zA-Z]{2,}'
+    r'(?:(?:[a-zA-Z0-9\-]+\.)+[a-zA-Z]{2,}'
     r'|(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}'
     r'(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(?::\d{1,5})?)'
-    r'(?:/[^\s<>"{}|\\^`\[\]]*)?')
+    # path part — non-greedy + stop before next http/www
+    r'(?:/[^\s<>"{}|\\^`\[\]]*?)?'
+    r'(?=(?:\s|$|https?://|www\.))'   # 👈 stop if new URL or end/space
+)
+
+
     #old regex 
     #url_pattern = r'(?:https?://|www\.)(?:(?:[a-zA-Z0-9\-]+\.)*[a-zA-Z0-9\-]+\.[a-zA-Z]{2,}|(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(?::\d{1,5})?)(?:/[^\s<>"{}|\\^`\[\]]*)?'
     #ensure ip address values are valid which is less than 255
@@ -50,7 +55,7 @@ class datacleaning:
         urls = list(set([self.clean_trailing_punctuation(url) for url in urls]))
         ips = re.findall(self.ip_pattern, body)
         ips = list(set(ips))
-        domains = [email.split('@')[-1] for email in emails]
+        domains = list(set([email.split('@')[-1] for email in emails]))
         
 
         # Remove emails and urls from data
@@ -111,7 +116,6 @@ class datacleaning:
             return output
                     
 
-        print(rows)
         # Save as CSV
         output_path = output_dir + "/cleaned_" + file_name + ".csv"
         with open(output_path, "w", newline="", encoding="utf-8") as csvfile:

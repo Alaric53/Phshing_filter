@@ -10,13 +10,6 @@ from datacleaning import datacleaning
 
 clean = datacleaning()
 
-#clean.cleanfile("testingdata.txt")
-#cleaned_text, emails, domains, urls, ips = clean.cleantext("Hello! Contact me at test@example.com or visit https://192.168.1.2:8080/page." )
-#print(cleaned_text)
-# print(emails)
-# print(ips)
-#print(urls)
-
 #MUST RUN IN /Phishing_filter folder
 class TestDataCleaning(unittest.TestCase):
     def test_ips(self):
@@ -53,12 +46,12 @@ class TestDataCleaning(unittest.TestCase):
 
     def test_urls(self):
         #test strings with valid URLS
-        input_text = "my website is https://www.notscam.com!!!https://www.NOTscam.com AND sitewww.sub.domain.co.uk/test!!!! and http://site.org/path?key=value&token=abc123.. and http://bit.ly/abc123."
+        input_text = "my website is https://www.greedy.comhttps://www.greedy2.com AND sitewww.sub.domain.co.uk/test!!!!https://www.greedy.com and http://site.org/path?key=value&token=abc123.. and http://bit.ly/abc123."
         cleaned_text, emails, domains, urls, ips = clean.cleantext(input_text)
         expected_cleaned_text = "websit site"
         expected_emails = []
         expected_domains = []
-        expected_urls = ["https://www.notscam.com","www.sub.domain.co.uk/test","http://site.org/path?key=value&token=abc123","http://bit.ly/abc123"]
+        expected_urls = ["https://www.greedy.com","https://www.greedy2.com","www.sub.domain.co.uk/test","http://site.org/path?key=value&token=abc123","http://bit.ly/abc123"]
         expected_ips = []
 
         self.assertEqual(cleaned_text, expected_cleaned_text)
@@ -85,7 +78,7 @@ class TestDataCleaning(unittest.TestCase):
         self.assertCountEqual(urls, expected_urls)
         self.assertCountEqual(ips, expected_ips)
 
-    def test_empty(self):
+    def test_emptytext(self):
         #test empty input
         input_text = ""
         cleaned_text, emails, domains, urls, ips = clean.cleantext(input_text)
@@ -102,12 +95,12 @@ class TestDataCleaning(unittest.TestCase):
         self.assertCountEqual(urls, expected_urls)
         self.assertCountEqual(ips, expected_ips)
 
-    def test_invalidfile(self):
+    def test_missingfile(self):
         #cleanfile function ensures that the file provided exists
         output = clean.cleanfile("testingdatas.txt")
         self.assertEqual(output,"File does not exist")
 
-    def test_invalidlabel(self):
+    def test_invalidfile(self):
         '''
         consists of 1 valid input and 1 invalid input
         No	Contact Me Now to Make $100 Today!
@@ -115,5 +108,10 @@ class TestDataCleaning(unittest.TestCase):
         '''
         output = clean.cleanfile("invalid.txt")
         self.assertEqual(output,"Saved 1 rows to cleaned_invalid.csv")
+
+    def test_emptyfile(self):
+        #cleanfile function ensures that the file provided exists
+        output = clean.cleanfile("empty.txt")
+        self.assertEqual(output,"Saved 0 rows to cleaned_empty.csv")
 if __name__ == '__main__':
     unittest.main()
