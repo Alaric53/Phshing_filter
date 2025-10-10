@@ -92,7 +92,7 @@ def process_user_input(cleaned_data=None):
         print(f"ML analysis completed: probability={probability}")
         
         # Combined risk score
-        risk_score, risk_level = combined_score(ruleset_score, probability)
+        risk_score, risk_level = combined_score(ruleset_score, probability, keyword_count)
         
         print(f"Final risk assessment: {risk_level} ({risk_score}%)")
         
@@ -123,7 +123,7 @@ def process_user_input(cleaned_data=None):
             'ips': []
         }
 
-def combined_score(ruleset_score, probability):
+def combined_score(ruleset_score, probability, keyword_count):
     """Combine ruleset and ML scores (unchanged logic)"""
     if ruleset_score is None or probability is None:
         return 0, "UNKNOWN"
@@ -134,9 +134,58 @@ def combined_score(ruleset_score, probability):
     except (TypeError, ValueError) as e:
         return 0, "ERROR"
     print(f"Scores - Ruleset: {ruleset_score}, ML: {ml_score}")
+
+    # Calculate ML confidence using the distance from 50%
+    # if score is 80 or 20 then the ML is super confident 
+    # if score is 40 or 60 not so confident
+    ml_confidence = abs(ml_score - 50) / 50  # 0 to 1
     
-    # Combine with 50/50 weightage
-    risk_score = round((ruleset_score * 0.5) + (ml_score * 0.5))    
+    # base confidence on whether other ruleset checks found issues
+    if ruleset_score > 50:
+        # High ruleset score means other checks found problems
+        base_confidence = 0.6
+    elif ruleset_score < 20:
+        # Low ruleset score means other checks found it safe
+        base_confidence = 0.3
+    else:
+        base_confidence = 0.5
+
+    ruleset_confidence = min(1.0, (keyword_count / 10) if keyword_count > 0 else base_confidence)
+    
+    # Adjust weights based on confidence
+    # If ML is more confident, give it more weight
+    # If ruleset found many keywords, give it more weight
+    
+    if ml_confidence > 0.4:  # ML is confident (score > 70% or < 30%)
+        ml_weight = 0.65
+        ruleset_weight = 0.35
+        method = "ML-dominant (high ML confidence)"
+    elif ruleset_confidence > 0.6:
+        ml_weight = 0.35
+        ruleset_weight = 0.65
+        method = "Rule-dominant because of Ruleset found many problems"
+    elif keyword_count >= 5:  # Many suspicious keywords
+        ml_weight = 0.4
+        ruleset_weight = 0.6
+        method = "Rule-dominant because of many keywords"
+    elif ruleset_score > 70:  # High ruleset score
+        ml_weight = 0.45
+        ruleset_weight = 0.55
+        method = "Rule-dominant because of high ruleset score"
+    elif keyword_count <= 2:
+        ml_weight = 0.05
+        ruleset_weight = 0.95
+        method = "special rule where not even a many keywords found"
+    else:  # Balanced approach
+        ml_weight = 0.5
+        ruleset_weight = 0.5
+        method = "Balanced"
+    print(f"Weighting Method: {method}")
+    print(f"  ML Weight: {ml_weight:.2f}")
+    print(f"  Ruleset Weight: {ruleset_weight:.2f}")
+
+    # Combine with adaptive weightage
+    risk_score = round((ruleset_score * ruleset_weight) + (ml_score * ml_weight))    
     print(f"Combined risk score: {risk_score}")
     
     # Determine danger level
