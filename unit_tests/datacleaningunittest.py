@@ -97,7 +97,7 @@ class TestDataCleaning(unittest.TestCase):
 
     def test_missingfile(self):
         #cleanfile function ensures that the file provided exists
-        output = clean.cleanfile("testingdatas.txt")
+        output = clean.cleanfile("trainingdatas.txt")
         self.assertEqual(output,"File does not exist")
 
     def test_invalidfile(self):
