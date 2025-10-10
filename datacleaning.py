@@ -6,7 +6,7 @@ from nltk.stem import PorterStemmer
 import csv
 import os
 
-
+nltk.download('stopwords', quiet=True)
 stemmer = PorterStemmer()
 
 
@@ -30,11 +30,12 @@ class datacleaning:
     r'(?!\d)'              # don’t allow trailing digit
     )
     #ip_pattern = r'\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(?::\d{1,5})?\b'
-    nltk.download('stopwords')
+    #nltk.download('stopwords')
     stop_words = set(stopwords.words('english'))
     def __init__(self):
         # Initialize resources once when the class is created
         self.stemmer = PorterStemmer()
+        self.stop_words = set(stopwords.words('english'))
 
     def clean_trailing_punctuation(self, text):
         return re.sub(r'[.,;:!?)]+$', '', text)
@@ -110,7 +111,7 @@ class datacleaning:
             return output
                     
 
-
+        print(rows)
         # Save as CSV
         output_path = output_dir + "/cleaned_" + file_name + ".csv"
         with open(output_path, "w", newline="", encoding="utf-8") as csvfile:
@@ -120,6 +121,7 @@ class datacleaning:
 
         
         output = f"Saved {len(rows)} rows to cleaned_{file_name}.csv"
+        print(output)
         return output
         
 

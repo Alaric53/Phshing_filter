@@ -17,7 +17,7 @@ clean = datacleaning()
 # print(ips)
 #print(urls)
 
-
+#MUST RUN IN /Phishing_filter folder
 class TestDataCleaning(unittest.TestCase):
     def test_ips(self):
         #test strings with valid ips and ports
