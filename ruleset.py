@@ -1,15 +1,17 @@
 import re
+import os
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 from text_processor import get_processor
 from nltk.stem import PorterStemmer
 #verifying and verified to verify
 stemmer = PorterStemmer()
 
-def load_keywords(filepath="suspicious_keywords.txt"):
+def load_keywords(filepath):
     with open(filepath, "r", encoding="utf-8") as f:
         words = [line.strip().lower() for line in f if line.strip()]
     return [stemmer.stem(word) for word in words]
 
-def load_safe_domains(filepath="safe_domains.csv"):
+def load_safe_domains(filepath):
     safe_domains = set()
     with open(filepath, "r", encoding="utf-8") as f:
         next(f)  # Skip the header row
@@ -21,8 +23,8 @@ def load_safe_domains(filepath="safe_domains.csv"):
     return safe_domains
 
 # Load them once at startup
-SUSPICIOUS_KEYWORDS = load_keywords()       
-SAFE_DOMAINS = load_safe_domains("safe_domains.csv")
+SUSPICIOUS_KEYWORDS = load_keywords(os.path.join(BASE_DIR, "suspicious_keywords.txt"))       
+SAFE_DOMAINS = load_safe_domains(os.path.join(BASE_DIR, "safe_domains.csv"))
 
 def safe_domain_check(provided_email):
     domain = provided_email.split("@")[-1].lower()
