@@ -33,9 +33,3 @@ def analyse(loaded_model_data, cleaned_text, emails, domains, urls, ips):
     
     #Return probability(Positive%)
     return probability[0][1]
-
-
-
-
-
-
