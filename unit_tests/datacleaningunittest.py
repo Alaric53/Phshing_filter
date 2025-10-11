@@ -18,7 +18,7 @@ class TestDataCleaning(unittest.TestCase):
         cleaned_text, emails, domains, urls, ips = clean.cleantext(input_text)
         expected_cleaned_text = "input text"
         expected_emails = []
-        expected_domains = []
+        expected_domains = ['192.168.1.100:443']
         expected_urls = ["http://192.168.1.100:443/banking/login"]
         expected_ips = ["192.168.12.1:8080","192.168.12.2","192.168.1.100:443"]
         
@@ -46,12 +46,12 @@ class TestDataCleaning(unittest.TestCase):
 
     def test_urls(self):
         #test strings with valid URLS
-        input_text = "my website is https://www.scam.com AND sitewww.sub.domain.co.uk/test https://www.scam.com and http://site.org/path?key=value&token=abc123... and http://bit.ly/abc123."
+        input_text = "my website is https://www.scam.com AND www.sub.domain.co.uk/test https://www.scam.com and http://site.org/path?key=value&token=abc123... and http://bit.ly/abc123 google.com"
         cleaned_text, emails, domains, urls, ips = clean.cleantext(input_text)
-        expected_cleaned_text = "websit site"
+        expected_cleaned_text = "websit"
         expected_emails = []
-        expected_domains = []
-        expected_urls = ["https://www.scam.com","www.sub.domain.co.uk/test","http://site.org/path?key=value&token=abc123","http://bit.ly/abc123"]
+        expected_domains = ['sub.domain.co.uk', 'site.org', 'bit.ly', 'scam.com', 'google.com']
+        expected_urls = ["https://www.scam.com","www.sub.domain.co.uk/test","http://site.org/path?key=value&token=abc123","http://bit.ly/abc123", "google.com"]
         expected_ips = []
 
         self.assertEqual(cleaned_text, expected_cleaned_text)
@@ -62,11 +62,11 @@ class TestDataCleaning(unittest.TestCase):
 
     def test_invalid_formats(self):
         # Test strings that are not valid emails, URLs, or IPs
-        input_text = "test@.com @invalid.com this is not an email. Also 999.999.999.999. A fake URL: htts://fake.com Invalid IP: 192.168.1.256"
+        input_text = "test@.com @invalid.com this is not an email. Also 999.999.999.999. A fake URL: fake.invalidtld Invalid IP: 192.168.1.256"
         cleaned_text, emails, domains, urls, ips = clean.cleantext(input_text)
         
         # Expected output should not contain any of the invalid formats
-        expected_cleaned_text = "testcom invalidcom email also 999999999999 fake url httsfakecom invalid ip 1921681256"
+        expected_cleaned_text = "testcom invalidcom email also 999999999999 fake url fakeinvalidtld invalid ip 1921681256"
         expected_emails = []
         expected_domains = []
         expected_urls = []

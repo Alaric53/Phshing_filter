@@ -8,6 +8,8 @@ import os
 
 nltk.download('stopwords', quiet=True)
 stemmer = PorterStemmer()
+from urllib.parse import urlparse
+
 
 
 class datacleaning:
@@ -15,11 +17,15 @@ class datacleaning:
     email_pattern = r'[\w\.-]+@[\w\.-]+\.[a-zA-Z]{2,}'
     #matches http and https 
     url_pattern = re.compile(
-    r'(?:https?://|www\.)'
-    r'(?:(?:[a-zA-Z0-9\-]+\.)*[a-zA-Z0-9\-]+\.[a-zA-Z]{2,}'
-    r'|(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}'
-    r'(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(?::\d{1,5})?)'
-    r'(?:/[^\s<>"{}|\\^`\[\]]*)?')
+    r'(?:^|(?<=[^\w@]))'
+    r'(?:'
+    r'https?://(?:(?:[a-zA-Z0-9\-]+\.)*[a-zA-Z0-9\-]+\.[a-zA-Z]{2,}|(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))'
+    r'|www\.(?:[a-zA-Z0-9\-]+\.)*[a-zA-Z0-9\-]+\.[a-zA-Z]{2,}'
+    r'|(?:[a-zA-Z0-9\-]+\.)*[a-zA-Z0-9\-]+\.(?:com|org|net|edu|gov|io|co|uk|de|fr|jp|au|ca|in|ru|br|mx|nl|se|ch|es|it|kr|cn|us|info|biz|tv|cc|ws)\b'
+    r')'
+    r'(?::\d{1,5})?'
+    r'(?:/[^\s<>"{}|\\^`\[\]]*)?',
+    re.MULTILINE)
 
 
     #old regex 
@@ -53,7 +59,13 @@ class datacleaning:
         ips = re.findall(self.ip_pattern, body)
         ips = list(set(ips))
         domains = list(set([email.split('@')[-1] for email in emails]))
-        
+        for i in urls:
+            if not i.startswith(('http://', 'https://')):
+                i = 'https://' + i
+            parsed = urlparse(i)
+            web = parsed.netloc.removeprefix('www.')
+            domains.append(web)
+                
 
         # Remove emails and urls from data
         cleaned_text = body
@@ -71,7 +83,6 @@ class datacleaning:
         #stemming words into base words,
         words = [stemmer.stem(w) for w in words]
         cleaned_text = " ".join(words)
-        print(urls)
         return cleaned_text, emails, domains, urls, ips
 
 
