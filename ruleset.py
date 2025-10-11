@@ -70,7 +70,10 @@ def levenshtein_distance(a,b):      #paypal vs paypa1
 
 def lookalike_domain_check(domain):   
     
-    for i in domain:                  # exact match = safe
+    pattern = r"https?://(?:www.)?(.*)" 
+    domain_only = re.sub(pattern, r"\1", domain)
+    
+    for i in domain_only.split(' '):                  # exact match = safe
         if i not in SAFE_DOMAINS:
             for safe in SAFE_DOMAINS:
                 distance = levenshtein_distance(i, safe)
@@ -88,13 +91,13 @@ def suspicious_url_detection(body):
     return score, suspicious_urls
 
 
-def calculator(sender: str, subject: str, body: str, urlIP: str, domains: list) -> tuple:  #Main ruleset score calculator returns ruleset score, keyword_count
+def calculator(sender: str, subject: str, body: str, urlIP: str) -> tuple:  #Main ruleset score calculator returns ruleset score, keyword_count
     sender_domain = sender.split("@")[-1]                                   #calculations done with ruleset
     domain_score = safe_domain_check(sender)
     keyword_count = suspicious_keyword_check(subject, body)
     keyword_score = min(15, keyword_count)
     position_score = min(15, keyword_position_scoring(subject, body))
-    lookalike_score = lookalike_domain_check(domains)
+    lookalike_score = lookalike_domain_check(urlIP)
     url_score, suspicious_urls = suspicious_url_detection(urlIP)
     url_score = min(15, url_score)
 
@@ -105,14 +108,14 @@ def calculator(sender: str, subject: str, body: str, urlIP: str, domains: list) 
     return ruleset_score, keyword_count
 
 
-def process_email_and_score(cleaned_text, emails, domains, urls, ips):  
+def process_email_and_score(cleaned_text, emails, domains, urls, ips):   #Returns tuple (danger_level, percentage_score, keyword_count)
     sender = " ".join(emails + domains) if emails or domains else ""
     subject = cleaned_text
     body = cleaned_text
     # convert list of urls + ips into one string
     urlIP = " ".join((urls or []) + (ips or []))
 
-    return calculator(sender, subject, body, urlIP,domains)
+    return calculator(sender, subject, body, urlIP)
 '''
 def main():
     print(process_email_and_score("Phishing Phishing Phishing Phishing Phishing Phishing Phishing Phishing ", [], [], [], []))
