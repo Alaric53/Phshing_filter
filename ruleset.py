@@ -108,7 +108,7 @@ def calculator(sender: str, subject: str, body: str, urlIP: str) -> tuple:  #Mai
     return ruleset_score, keyword_count
 
 
-def process_email_and_score(cleaned_text, emails, domains, urls, ips):   #Returns tuple (danger_level, percentage_score, keyword_count)
+def process_email_and_score(cleaned_text, emails, domains, urls, ips):  
     sender = " ".join(emails + domains) if emails or domains else ""
     subject = cleaned_text
     body = cleaned_text
@@ -123,6 +123,7 @@ def main():
 if __name__ == "__main__":
     main()
 '''
+
 
 
 
