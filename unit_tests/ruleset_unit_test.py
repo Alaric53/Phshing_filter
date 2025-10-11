@@ -49,10 +49,10 @@ class TestRuleSet(unittest.TestCase):
         self.assertIn("http://scam.com", urls)
 
 # --- Demo data ---
-email = "user@g0v.sg"  # typo lookalike domain
-subject = "Urgent account verification"
-body = "Please verify your password immediately at http://192.168.0.1"
-domain = "g0v.sg"
+email = "support@amaz0n.com"  # typo lookalike domain (0 instead of o)
+subject = "Important: Verify your Amazon account"
+body = "Your Amazon account needs verification. Please click http://192.168.0.1 to confirm."
+domain = "amaz0n.com"
 print("\n--- DEMO INPUT DATA ---")
 print(f"Email: {email}")
 print(f"Subject: {subject}")
@@ -63,7 +63,7 @@ print(f"Domain: {domain}\n")
 safe_result = safe_domain_check(email)
 keyword_hits = suspicious_keyword_check(subject, body)
 keyword_pos_score = keyword_position_scoring(subject, body)
-lev_dist = levenshtein_distance("paypal", "paypa1")
+lev_dist = levenshtein_distance("amazon", "amaz0n")
 lookalike_score = lookalike_domain_check(domain)
 url_score, suspicious_urls = suspicious_url_detection(body)
 
