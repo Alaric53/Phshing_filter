@@ -1,15 +1,17 @@
 import re
+import os
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 from text_processor import get_processor
 from nltk.stem import PorterStemmer
 #verifying and verified to verify
 stemmer = PorterStemmer()
 
-def load_keywords(filepath="suspicious_keywords.txt"):
+def load_keywords(filepath):
     with open(filepath, "r", encoding="utf-8") as f:
         words = [line.strip().lower() for line in f if line.strip()]
     return [stemmer.stem(word) for word in words]
 
-def load_safe_domains(filepath="safe_domains.csv"):
+def load_safe_domains(filepath):
     safe_domains = set()
     with open(filepath, "r", encoding="utf-8") as f:
         next(f)  # Skip the header row
@@ -21,8 +23,8 @@ def load_safe_domains(filepath="safe_domains.csv"):
     return safe_domains
 
 # Load them once at startup
-SUSPICIOUS_KEYWORDS = load_keywords()       
-SAFE_DOMAINS = load_safe_domains("safe_domains.csv")
+SUSPICIOUS_KEYWORDS = load_keywords(os.path.join(BASE_DIR, "suspicious_keywords.txt"))       
+SAFE_DOMAINS = load_safe_domains(os.path.join(BASE_DIR, "safe_domains.csv"))
 
 def safe_domain_check(provided_email):
     domain = provided_email.split("@")[-1].lower()
@@ -66,13 +68,18 @@ def levenshtein_distance(a,b):      #paypal vs paypa1
     return dp[len(a)][len(b)]
 
 
-def lookalike_domain_check(domain):             # checker using levenshtein alg
-    if domain in SAFE_DOMAINS:                  # exact match = safe
-        return 0
-    for safe in SAFE_DOMAINS:
-        distance = levenshtein_distance(domain, safe)
-        if distance <= 2:   # small difference means it is suspicious
-            return 3        
+def lookalike_domain_check(domain):   
+    
+    pattern = r"https?://(?:www.)?(.*)" 
+    domain_only = re.sub(pattern, r"\1", domain)
+    
+    for i in domain_only.split(' '):                  # exact match = safe
+        if i not in SAFE_DOMAINS:
+            for safe in SAFE_DOMAINS:
+                distance = levenshtein_distance(i, safe)
+                if distance <= 2:   # small difference means it is suspicious
+                    return 10
+    
     return 0
 
 
@@ -91,7 +98,7 @@ def calculator(sender: str, subject: str, body: str, urlIP: str) -> tuple:  #Mai
     keyword_count = suspicious_keyword_check(subject, body)
     keyword_score = min(15, keyword_count)
     position_score = min(15, keyword_position_scoring(subject, body))
-    lookalike_score = lookalike_domain_check(sender_domain)
+    lookalike_score = lookalike_domain_check(urlIP)
     url_score, suspicious_urls = suspicious_url_detection(urlIP)
     url_score = min(15, url_score)
 
@@ -102,7 +109,7 @@ def calculator(sender: str, subject: str, body: str, urlIP: str) -> tuple:  #Mai
     return ruleset_score, keyword_count
 
 
-def process_email_and_score(cleaned_text, emails, domains, urls, ips):   #Returns tuple (danger_level, percentage_score, keyword_count)
+def process_email_and_score(cleaned_text, emails, domains, urls, ips):  
     sender = " ".join(emails + domains) if emails or domains else ""
     subject = cleaned_text
     body = cleaned_text
