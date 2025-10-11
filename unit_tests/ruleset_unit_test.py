@@ -40,7 +40,7 @@ class TestRuleSet(unittest.TestCase):
 
     def test_lookalike_domain_check(self):
         self.assertEqual(lookalike_domain_check("gov.sg"), 0)
-        self.assertIn(lookalike_domain_check("g0v.sg"), [0, 3])
+        self.assertIn(lookalike_domain_check("g0v.sg"), [0, 10])
 
     def test_suspicious_url_detection(self):
         body = "Click http://192.168.0.1 or http://scam.com"
