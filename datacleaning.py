@@ -68,7 +68,8 @@ class datacleaning:
                 i = 'https://' + i                          #urls without http would have trouble getting extracted
             parsed = urlparse(i)
             web = parsed.netloc.removeprefix('www.')        #retrieves web domain only
-            domains.append(web)     
+            if web not in domains:
+                domains.append(web)     
                 
 
         # Remove emails and urls from data
