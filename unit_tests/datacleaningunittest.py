@@ -45,7 +45,8 @@ class TestDataCleaning(unittest.TestCase):
         self.assertCountEqual(ips, expected_ips)
 
     def test_urls(self):
-        #test strings with valid URLS
+        #Checks for any http/https address, www.domains.com and domains.com
+        #if it does not have https or www, domains.{valid tld} has to be found
         input_text = "my website is https://www.scam.com AND www.sub.domain.co.uk/test https://www.scam.com and http://site.org/path?key=value&token=abc123... and http://bit.ly/abc123 google.com"
         cleaned_text, emails, domains, urls, ips = clean.cleantext(input_text)
         expected_cleaned_text = "websit"
@@ -61,7 +62,7 @@ class TestDataCleaning(unittest.TestCase):
         self.assertCountEqual(ips, expected_ips)
 
     def test_invalid_formats(self):
-        # Test strings that are not valid emails, URLs, or IPs
+        # Test strings that are not valid emails, URLs, or IPs exceeding 255
         input_text = "test@.com @invalid.com this is not an email. Also 999.999.999.999. A fake URL: fake.invalidtld Invalid IP: 192.168.1.256"
         cleaned_text, emails, domains, urls, ips = clean.cleantext(input_text)
         
