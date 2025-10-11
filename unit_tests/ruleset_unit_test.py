@@ -68,7 +68,7 @@ lookalike_score = lookalike_domain_check(domain)
 url_score, suspicious_urls = suspicious_url_detection(body)
 
 # --- Display results ---
-print("---RULESET FUNCTION DEMONSTRATION ---")
+print("--- RULESET FUNCTION DEMONSTRATION ---")
 print(f"Safe domain check (0=safe,2=unsafe): {safe_result}")
 print(f"Suspicious keywords detected: {keyword_hits}")
 print(f"Keyword position score: {keyword_pos_score}")
