@@ -39,8 +39,8 @@ class TestRuleSet(unittest.TestCase):
         self.assertEqual(levenshtein_distance("abc", "abd"), 1)
 
     def test_lookalike_domain_check(self):
-        self.assertEqual(lookalike_domain_check("gov.sg"), 0)
-        self.assertIn(lookalike_domain_check("g0v.sg"), [0, 10])
+        self.assertEqual(lookalike_domain_check(["gov.sg"]), 0)
+        self.assertEqual(lookalike_domain_check(["g0v.sg"]), 10)
 
     def test_suspicious_url_detection(self):
         body = "Click http://192.168.0.1 or http://scam.com"
@@ -52,7 +52,7 @@ class TestRuleSet(unittest.TestCase):
 email = "support@amaz0n.com"  # typo lookalike domain (0 instead of o)
 subject = "Important: Verify your Amazon account"
 body = "Your Amazon account needs verification. Please click http://192.168.0.1 to confirm."
-domain = "amaz0n.com"
+domain = ["amaz0n.com"]
 print("\n--- DEMO INPUT DATA ---")
 print(f"Email: {email}")
 print(f"Subject: {subject}")
